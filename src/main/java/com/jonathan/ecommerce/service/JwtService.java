@@ -3,6 +3,7 @@ package com.jonathan.ecommerce.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Jwts;
@@ -21,6 +22,8 @@ public class JwtService {
     @Value("${security.jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
+    private static final String TOKEN_TYPE_CLAIM = "type";
+
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails, accessTokenExpiration);
     }
@@ -28,7 +31,7 @@ public class JwtService {
     private String generateToken(Map<String, Object> claims, UserDetails userDetails, Long expiration) {
         claims.put("role", userDetails.getAuthorities()
                 .stream()
-                .map(auth -> auth.getAuthority())
+                .map(GrantedAuthority::getAuthority)
                 .toList());
 
         return Jwts.builder()
@@ -38,6 +41,21 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, "refresh");
+        return generateToken(claims, userDetails, accessTokenExpiration);
+    }
+
+    public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
+        return isTokenValid(token, userDetails) && isRefreshToken(token);
+    }
+
+    private boolean isRefreshToken(String token) {
+        String type = extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class));
+        return "refresh".equals(type);
     }
 
     private SecretKey getSigningKey() {
