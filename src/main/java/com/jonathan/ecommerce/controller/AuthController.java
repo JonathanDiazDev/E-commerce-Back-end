@@ -37,7 +37,7 @@ public class AuthController {
             @CookieValue(name = "refreshToken", required = false) String refreshToken){
         if (refreshToken == null || refreshToken.isBlank()) { return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); }
 
-       return ResponseEntity.ok(jwtService.refreshToken(refreshToken));
+       return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
 }

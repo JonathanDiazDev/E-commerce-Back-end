@@ -62,8 +62,17 @@ public class AuthServiceImpl implements AuthService {
                 new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.email());
         String accessToken = jwtService.generateToken(userDetails);
+        String refreshToken = jwtService.generateRefreshToken(userDetails);
+
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
         return new AuthResponse(
-                accessToken);
+                accessToken,
+                refreshToken,
+                user.getEmail(),
+                user.getName(),
+                user.getRole().name()
+        );
     }
 
     @Override
@@ -89,7 +98,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken newRefreshTokenEntity = new RefreshToken();
         newRefreshTokenEntity.setUser(token.getUser());
         newRefreshTokenEntity.setTokenHash(HashUtil.hashToken(newRefreshToken));
-        newRefreshTokenEntity.getRevoked
+//        newRefreshTokenEntity.getRevoked
 
         token.setExpired(true);
         token.setRevoked(true);
