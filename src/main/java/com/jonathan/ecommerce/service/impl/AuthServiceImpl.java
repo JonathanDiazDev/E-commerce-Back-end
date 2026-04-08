@@ -6,7 +6,6 @@ import com.jonathan.ecommerce.dto.UserRequest;
 import com.jonathan.ecommerce.dto.UserResponse;
 import com.jonathan.ecommerce.entity.RefreshToken;
 import com.jonathan.ecommerce.entity.Role;
-import com.jonathan.ecommerce.entity.Token;
 import com.jonathan.ecommerce.entity.User;
 import com.jonathan.ecommerce.repository.RefreshTokenRepository;
 import com.jonathan.ecommerce.repository.TokenRepository;
@@ -24,7 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -121,12 +120,14 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
-    private void saveUserToken(User user, String jwtToken) {
-        User newUser = new User();
-        newUser.setName(user.getName());
-        newUser.setEmail(user.getEmail());
-        newUser.setRole(user.getRole());
-        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
+    @Override
+    public void logout(String refreshToken) {
+        String hashedToken = HashUtil.hashToken(refreshToken);
+        refreshTokenRepository.findByTokenHash(hashedToken)
+                .ifPresent(token -> {
+                    token.setRevoked(true);
+                    refreshTokenRepository.save(token);
+                });
     }
 
 }

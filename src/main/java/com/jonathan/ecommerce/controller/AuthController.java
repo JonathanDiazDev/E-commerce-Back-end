@@ -5,7 +5,6 @@ import com.jonathan.ecommerce.dto.AuthResponse;
 import com.jonathan.ecommerce.dto.UserRequest;
 import com.jonathan.ecommerce.dto.UserResponse;
 import com.jonathan.ecommerce.service.AuthService;
-import com.jonathan.ecommerce.service.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
@@ -38,6 +36,13 @@ public class AuthController {
         if (refreshToken == null || refreshToken.isBlank()) { return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); }
 
        return ResponseEntity.ok(authService.refreshToken(refreshToken));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken){
+        if (refreshToken == null || refreshToken.isBlank()) { return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); }
+        authService.logout(refreshToken);
+        return ResponseEntity.ok().build();
     }
 
 }
