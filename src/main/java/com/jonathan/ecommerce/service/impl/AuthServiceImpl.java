@@ -23,6 +23,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -79,10 +82,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse refreshToken(String refreshToken) {
         String hashedToken = HashUtil.hashToken(refreshToken);
 
-        Token token = tokenRepository.findByToken(refreshToken)
+        RefreshToken refreshToken1 = refreshTokenRepository.findByTokenHash(hashedToken)
                 .orElseThrow(() -> new BadCredentialsException("Token no encontrado"));
 
-        if (token.isRevoked() || token.isExpired() ) {
+        if (refreshToken1.isRevoked() || refreshToken1.getExpiresAt().isBefore(Instant.now()) ) {
             throw new BadCredentialsException("El Token ya no es valido");
         }
 
@@ -95,14 +98,16 @@ public class AuthServiceImpl implements AuthService {
         String newAccessToken = jwtService.generateToken(userDetails);
         String newRefreshToken = jwtService.generateRefreshToken(userDetails);
 
-        RefreshToken newRefreshTokenEntity = new RefreshToken();
-        newRefreshTokenEntity.setUser(token.getUser());
-        newRefreshTokenEntity.setTokenHash(HashUtil.hashToken(newRefreshToken));
-//        newRefreshTokenEntity.getRevoked
+        refreshToken1.setRevoked(true);
+        refreshToken1.setReplacedByToken(HashUtil.hashToken(newAccessToken));
+        refreshTokenRepository.save(refreshToken1);
 
-        token.setExpired(true);
-        token.setRevoked(true);
-        tokenRepository.save(token);
+        RefreshToken newRefreshTokenEntity = new RefreshToken();
+        newRefreshTokenEntity.setUser(refreshToken1.getUser());
+        newRefreshTokenEntity.setTokenHash(HashUtil.hashToken(newRefreshToken));
+        newRefreshTokenEntity.setExpiresAt(Instant.now().plusMillis(jwtService.refreshTokenExpiration));
+        newRefreshTokenEntity.setRevoked(false);
+        refreshTokenRepository.save(newRefreshTokenEntity);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(()  -> new BadCredentialsException("Usuario no encontrado"));
@@ -117,9 +122,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void saveUserToken(User user, String jwtToken) {
-        // Aquí construyes el objeto Token (new Token())
-        // Seteas sus valores
-        // Y lo guardas con el repository
+        User newUser = new User();
+        newUser.setName(user.getName());
+        newUser.setEmail(user.getEmail());
+        newUser.setRole(user.getRole());
+        newUser.setPassword(passwordEncoder.encode(user.getPassword()));
     }
 
 }

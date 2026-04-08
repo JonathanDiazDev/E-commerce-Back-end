@@ -22,6 +22,9 @@ public class JwtService {
     @Value("${security.jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
+    @Value("${security.jwt.refresh-token-expiration}")
+    public long refreshTokenExpiration;
+
     private static final String TOKEN_TYPE_CLAIM = "type";
 
     public String generateToken(UserDetails userDetails) {
@@ -46,7 +49,7 @@ public class JwtService {
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put(TOKEN_TYPE_CLAIM, "refresh");
-        return generateToken(claims, userDetails, accessTokenExpiration);
+        return generateToken(claims, userDetails, refreshTokenExpiration);
     }
 
     public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
