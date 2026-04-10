@@ -5,10 +5,13 @@ import com.jonathan.ecommerce.dto.AuthResponse;
 import com.jonathan.ecommerce.dto.UserRequest;
 import com.jonathan.ecommerce.dto.UserResponse;
 import com.jonathan.ecommerce.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -39,9 +42,23 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken){
+    public ResponseEntity<Void> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken,
+                                       HttpServletRequest request) {
         if (refreshToken == null || refreshToken.isBlank()) { return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); }
-        authService.logout(refreshToken);
+
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String accessToken = authHeader.substring(7);
+        authService.logout(refreshToken, accessToken);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/logout-all")
+    public ResponseEntity<Void> logoutAll(@AuthenticationPrincipal UserDetails userDetails){
+        String email = userDetails.getUsername();
+        authService.logoutAll(email);
         return ResponseEntity.ok().build();
     }
 

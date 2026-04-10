@@ -6,6 +6,7 @@ import com.jonathan.ecommerce.dto.UserRequest;
 import com.jonathan.ecommerce.dto.UserResponse;
 import com.jonathan.ecommerce.entity.RefreshToken;
 import com.jonathan.ecommerce.entity.Role;
+import com.jonathan.ecommerce.entity.Token;
 import com.jonathan.ecommerce.entity.User;
 import com.jonathan.ecommerce.repository.RefreshTokenRepository;
 import com.jonathan.ecommerce.repository.TokenRepository;
@@ -21,9 +22,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Optional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,8 +53,8 @@ public class AuthServiceImpl implements AuthService {
 
         return new UserResponse(
                 user.getId(),
-                user.getName(),
                 user.getEmail(),
+                user.getName(),
                 user.getRole().name(),
                 user.getCreatedAt()
         );
@@ -68,6 +70,16 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+        tokenRepository.revokeAllAccessTokensByUserId(user.getId());
+        saveUserToken(user, accessToken);
+
+        RefreshToken newRefreshToken = new RefreshToken();
+        newRefreshToken.setUser(user);
+        newRefreshToken.setTokenHash(HashUtil.hashToken(refreshToken));
+        newRefreshToken.setExpiresAt(Instant.now().plusMillis(jwtService.refreshTokenExpiration));
+        newRefreshToken.setRevoked(false);
+        refreshTokenRepository.save(newRefreshToken);
+
         return new AuthResponse(
                 accessToken,
                 refreshToken,
@@ -121,13 +133,43 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout(String refreshToken) {
+    public void logout(String refreshToken, String  accessToken) {
         String hashedToken = HashUtil.hashToken(refreshToken);
         refreshTokenRepository.findByTokenHash(hashedToken)
                 .ifPresent(token -> {
                     token.setRevoked(true);
                     refreshTokenRepository.save(token);
                 });
+        tokenRepository.findByToken(accessToken).ifPresent(token -> {
+            token.setRevoked(true);
+            tokenRepository.save(token);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void logoutAll(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
+
+        List<RefreshToken> refreshTokens =
+                refreshTokenRepository.findAllByUserAndRevokedFalse(user);
+        refreshTokens.forEach(token -> token.setRevoked(true));
+        refreshTokenRepository.saveAll(refreshTokens);
+
+        List<Token> accessTokens =
+                tokenRepository.findAllByUserIdAndExpiredFalseAndRevokedFalse(user.getId());
+        accessTokens.forEach(token -> token.setRevoked(true));
+        tokenRepository.saveAll(accessTokens);
+    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        Token token = new Token();
+        token.setUser(user);
+        token.setExpired(false);
+        token.setRevoked(false);
+        token.setToken(jwtToken);
+        tokenRepository.save(token);
     }
 
 }
