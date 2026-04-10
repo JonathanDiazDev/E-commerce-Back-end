@@ -3,6 +3,7 @@ package com.jonathan.ecommerce.config;
 import com.jonathan.ecommerce.entity.Token;
 import com.jonathan.ecommerce.repository.TokenRepository;
 import com.jonathan.ecommerce.service.JwtService;
+import com.jonathan.ecommerce.service.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
 
     @Override
@@ -41,8 +43,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String jwt = header.substring(7);
+        if (tokenBlacklistService.isTokenBlacklisted(jwt)){
+            chain.doFilter(request, response);
+            return;
+        }
 
-        try {
+            try {
             final String userEmail = jwtService.extractUsername(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {

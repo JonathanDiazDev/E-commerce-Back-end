@@ -13,6 +13,7 @@ import com.jonathan.ecommerce.repository.TokenRepository;
 import com.jonathan.ecommerce.repository.UserRepository;
 import com.jonathan.ecommerce.service.AuthService;
 import com.jonathan.ecommerce.service.JwtService;
+import com.jonathan.ecommerce.service.TokenBlacklistService;
 import com.jonathan.ecommerce.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,6 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     public UserResponse register(UserRequest request){
@@ -134,6 +136,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String refreshToken, String  accessToken) {
+        long expiration = jwtService.extractExpiration(accessToken).getTime()
+                - System.currentTimeMillis();
+        tokenBlacklistService.blacklistToken(accessToken, expiration);
+
         String hashedToken = HashUtil.hashToken(refreshToken);
         refreshTokenRepository.findByTokenHash(hashedToken)
                 .ifPresent(token -> {

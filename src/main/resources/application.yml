@@ -15,16 +15,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    # Asegura que Hibernate envíe las fechas en UTC
+    # Asegura que Hibernate envï¿½e las fechas en UTC
     jdbc:
       time_zone: UTC
 
-  # Configuración para Redis
+  # Configuraciï¿½n para Redis
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+      timeout: 60000
 
 security:
   jwt:
