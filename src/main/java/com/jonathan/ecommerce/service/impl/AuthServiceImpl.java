@@ -5,7 +5,7 @@ import com.jonathan.ecommerce.dto.AuthResponse;
 import com.jonathan.ecommerce.dto.UserRequest;
 import com.jonathan.ecommerce.dto.UserResponse;
 import com.jonathan.ecommerce.entity.RefreshToken;
-import com.jonathan.ecommerce.entity.Role;
+import com.jonathan.ecommerce.entity.enums.Role;
 import com.jonathan.ecommerce.entity.Token;
 import com.jonathan.ecommerce.entity.User;
 import com.jonathan.ecommerce.repository.RefreshTokenRepository;
