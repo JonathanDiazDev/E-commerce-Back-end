@@ -12,16 +12,17 @@
 
 ## 📌 Overview
 
-This project is the backend of a full-featured e-commerce platform. It exposes a secure REST API that handles user authentication, product management, and shopping cart logic. Designed with a layered architecture, it focuses on clean code, security best practices, and scalability.
+This project is the backend of a full-featured e-commerce platform. It exposes a secure REST API currently focused on a complete authentication system, with product and cart modules actively under development. Designed with a layered architecture, it prioritizes clean code, security best practices, and scalability.
 
 ---
 
 ## ✨ Features
 
-- **JWT Authentication** — Stateless auth with access tokens using JJWT 0.12.6, including token invalidation via a `tokens` table with `expired` and `revoked` flags
+- **JWT Authentication** — Stateless auth with access & refresh tokens using JJWT 0.12.6
+- **Token Revocation** — Invalidation via a `tokens` table with `expired` and `revoked` flags
+- **Refresh Token** — Silent session renewal without re-login via a dedicated endpoint
+- **Logout & Logout All** — Single-device and all-devices session termination
 - **Spring Security** — Role-based access control protecting all sensitive endpoints
-- **Product Management** — Full CRUD operations for product catalog and inventory
-- **Shopping Cart** — Cart creation, item management, and quantity control per user
 - **Input Validation** — Request validation with Jakarta Bean Validation + Hibernate Validator
 - **Layered Architecture** — Controller → Service → Repository separation of concerns
 - **Lombok** — Reduced boilerplate across all entity and DTO classes
@@ -63,7 +64,7 @@ src/
 
 ## 🔐 Security Design
 
-Authentication is handled via **stateless JWT tokens**. Upon login, the server issues a signed JWT that must be included in the `Authorization` header of every protected request.
+Authentication is handled via **stateless JWT tokens**. Upon login, the server issues both an **access token** (short-lived) and a **refresh token** (long-lived). The refresh token allows the client to obtain a new access token without re-authenticating.
 
 Token invalidation is handled through a `tokens` table in the database:
 
@@ -76,7 +77,7 @@ tokens
 └── user_id (FK)
 ```
 
-On logout, the token is marked as `expired = true` and `revoked = true`, preventing reuse even if the JWT itself has not yet expired.
+On logout, the token is marked as `expired = true` and `revoked = true`, preventing reuse even if the JWT itself has not yet expired. The `logout-all` endpoint revokes every active token associated with the user across all devices.
 
 The `JwtAuthFilter` intercepts every request, validates the token signature, and checks the database to ensure the token has not been revoked.
 
@@ -117,6 +118,7 @@ spring.jpa.show-sql=true
 
 app.jwt.secret=your_super_secret_key_here
 app.jwt.expiration=86400000
+app.jwt.refresh-expiration=604800000
 ```
 
 ### 3. Run the application
@@ -136,29 +138,14 @@ The API will be available at `http://localhost:8080`.
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | `POST` | `/api/auth/register` | Register a new user | ❌ |
-| `POST` | `/api/auth/login` | Authenticate and receive JWT | ❌ |
-| `POST` | `/api/auth/logout` | Invalidate current token | ✅ |
-
-### Products
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/products` | List all products | ❌ |
-| `GET` | `/api/products/{id}` | Get product by ID | ❌ |
-| `POST` | `/api/products` | Create a new product | ✅ ADMIN |
-| `PUT` | `/api/products/{id}` | Update a product | ✅ ADMIN |
-| `DELETE` | `/api/products/{id}` | Delete a product | ✅ ADMIN |
-
-### Cart
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/cart` | Get current user's cart | ✅ |
-| `POST` | `/api/cart/items` | Add item to cart | ✅ |
-| `PUT` | `/api/cart/items/{id}` | Update item quantity | ✅ |
-| `DELETE` | `/api/cart/items/{id}` | Remove item from cart | ✅ |
+| `POST` | `/api/auth/login` | Authenticate — returns access + refresh token | ❌ |
+| `POST` | `/api/auth/refresh-token` | Issue a new access token using the refresh token | ✅ |
+| `POST` | `/api/auth/logout` | Invalidate the current session token | ✅ |
+| `POST` | `/api/auth/logout-all` | Invalidate all active tokens for the user | ✅ |
 
 > 📝 All protected endpoints require the header: `Authorization: Bearer <token>`
+
+> ⚙️ **Product** and **Cart** endpoints are under active development.
 
 ---
 
@@ -181,7 +168,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 **Example — Authenticated request:**
 
 ```bash
-curl -X GET http://localhost:8080/api/cart \
+curl -X POST http://localhost:8080/api/auth/logout \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."
 ```
 
@@ -189,9 +176,12 @@ curl -X GET http://localhost:8080/api/cart \
 
 ## 🔄 Roadmap
 
-- [x] JWT authentication with token revocation
-- [x] Product CRUD
-- [x] Shopping cart logic
+- [x] JWT authentication (access + refresh tokens)
+- [x] Token revocation — logout & logout-all
+- [x] Spring Security configuration & JWT filter
+- [x] User registration & login
+- [ ] Product CRUD *(entities defined, endpoints in progress)*
+- [ ] Shopping cart logic *(entities defined, endpoints in progress)*
 - [ ] Order management & checkout flow
 - [ ] Docker Compose setup
 - [ ] Swagger / OpenAPI documentation
