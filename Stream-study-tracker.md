@@ -68,7 +68,7 @@ Para que domines esto en tu camino como desarrollador backend, aquí tienes la e
 | 3. Mapa             |        .map(e -> ...)         | Transforma un elemento en otro (ej. String a Integer). | Intermedia |              
 | 4. Reducción        |   .reduce(0, (a, b) -> a+b)   |          Combina todos los elementos en un solo valor. |   Terminal |
 | 5. Colector         | .collect(Collectors.toList()) |         Guarda los resultados en una nueva lista/mapa. |   Terminal |
-
+ En versiones de Java en adelante no se necesita .collect(Collectors.toList()) se puede usar .toList() directamente, aunque genera una lista inmutable, si la quisieras mutable se usaria .collect(Collectors.toList()).
 
 # El "Boss Final": Un ejemplo del mundo real\
 Imagina que estás en el backend de una app de eCommerce y necesitas:
@@ -81,3 +81,7 @@ Imagina que estás en el backend de una app de eCommerce y necesitas:
               .filter(pedido -> pedido.getMonto() > 100) // Filtramos
               .map(pedido -> pedido.getClienteEmail())  // Transformamos (de Pedido a String)
               .collect(Collectors.toList());             // Recolectamos
+Ademas de esos operadores, tambien estan los siguientees:
+1. __reduce__: para colapsar todos los elementos en un solo valor(suma, producto, concatenacion).
+2. __flatMap__: para cuando cada elemento contiene una coleeccion adentro y necesitas "aplanarla" en un solo stream.
+3. __groupinBy__: para agrupar elementos en un Map segun algun criterio. Es el mas potente y el que mas se usa en backend real.

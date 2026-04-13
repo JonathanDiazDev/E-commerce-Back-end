@@ -1,9 +1,9 @@
 package com.jonathan.ecommerce.service.impl;
 
-import com.jonathan.ecommerce.dto.AuthRequest;
-import com.jonathan.ecommerce.dto.AuthResponse;
-import com.jonathan.ecommerce.dto.UserRequest;
-import com.jonathan.ecommerce.dto.UserResponse;
+import com.jonathan.ecommerce.dto.request.AuthRequest;
+import com.jonathan.ecommerce.dto.response.AuthResponse;
+import com.jonathan.ecommerce.dto.request.UserRequest;
+import com.jonathan.ecommerce.dto.response.UserResponse;
 import com.jonathan.ecommerce.entity.RefreshToken;
 import com.jonathan.ecommerce.entity.enums.Role;
 import com.jonathan.ecommerce.entity.Token;
