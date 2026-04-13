@@ -1,263 +1,143 @@
-# 🛒 E-commerce Backend API
+# 🛒 E-Commerce Backend
 
-> A production-ready RESTful API for e-commerce operations — built with Spring Boot 3, Spring Security, JWT authentication, and PostgreSQL.
-
-[![Java](https://img.shields.io/badge/Java-21-007396?style=flat-square&logo=java&logoColor=white)](https://openjdk.org/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.x-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![JWT](https://img.shields.io/badge/JWT-JJWT_0.12.6-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://github.com/jwtk/jjwt)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+A production-ready RESTful API for an e-commerce platform built with **Java 21** and **Spring Boot 3**, focused on security, clean architecture, and scalability.
 
 ---
 
-## 📌 Overview
-
-<<<<<<< HEAD
-This project is the backend of a full-featured e-commerce platform. It exposes a secure REST API currently focused on a complete authentication system, with product and cart modules actively under development. Designed with a layered architecture, it prioritizes clean code, security best practices, and scalability.
-=======
-This project is the backend of a full-featured e-commerce platform. It exposes a secure REST API that handles user authentication, product management, and shopping cart logic. Designed with a layered architecture, it focuses on clean code, security best practices, and scalability.
->>>>>>> feature/redis-management
-
----
-
-## ✨ Features
-
-<<<<<<< HEAD
-- **JWT Authentication** — Stateless auth with access & refresh tokens using JJWT 0.12.6
-- **Token Revocation** — Invalidation via a `tokens` table with `expired` and `revoked` flags
-- **Refresh Token** — Silent session renewal without re-login via a dedicated endpoint
-- **Logout & Logout All** — Single-device and all-devices session termination
-- **Spring Security** — Role-based access control protecting all sensitive endpoints
-=======
-- **JWT Authentication** — Stateless auth with access tokens using JJWT 0.12.6, including token invalidation via a `tokens` table with `expired` and `revoked` flags
-- **Spring Security** — Role-based access control protecting all sensitive endpoints
-- **Product Management** — Full CRUD operations for product catalog and inventory
-- **Shopping Cart** — Cart creation, item management, and quantity control per user
->>>>>>> feature/redis-management
-- **Input Validation** — Request validation with Jakarta Bean Validation + Hibernate Validator
-- **Layered Architecture** — Controller → Service → Repository separation of concerns
-- **Lombok** — Reduced boilerplate across all entity and DTO classes
-
----
-
-## 🏗️ Tech Stack
+## 🚀 Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Language | Java 21 |
-| Framework | Spring Boot 3.5.x |
-| Security | Spring Security + JJWT 0.12.6 |
-| ORM | Spring Data JPA (Hibernate) |
+| Framework | Spring Boot 3 |
+| Security | Spring Security 6 + JWT |
+| Persistence | Spring Data JPA + Hibernate |
 | Database | PostgreSQL |
-| Validation | Jakarta Validation API + Hibernate Validator 8 |
-| Utilities | Lombok, Google Guava 33 |
-| Build Tool | Maven (Maven Wrapper included) |
+| Cache | Redis |
+| Containerization | Docker |
+| API Docs | Swagger / OpenAPI 3 |
+| Build Tool | Maven |
 
 ---
 
-## 📁 Project Structure
+## 🏗️ Architecture
+
+The project follows a **layered clean architecture** with clear separation of concerns:
 
 ```
-src/
-└── main/
-    ├── java/com/jonathan/ecommerce/
-    │   ├── auth/           # Authentication controllers & DTOs
-    │   ├── config/         # Security config, JWT filter, beans
-    │   ├── model/          # JPA entities (User, Product, Cart, Token...)
-    │   ├── repository/     # Spring Data JPA repositories
-    │   ├── service/        # Business logic layer
-    │   └── controller/     # REST controllers
-    └── resources/
-        └── application.properties
+controller/     → HTTP layer, request/response handling
+service/        → Business logic (interface + impl pattern)
+repository/     → Data access layer (Spring Data JPA)
+entity/         → JPA entities
+dto/            → Request and Response records
+config/         → Security, Redis, and filter configuration
+util/           → Shared utilities (e.g. token hashing)
 ```
 
 ---
 
-## 🔐 Security Design
+## 🔐 Authentication & Security
 
-<<<<<<< HEAD
-Authentication is handled via **stateless JWT tokens**. Upon login, the server issues both an **access token** (short-lived) and a **refresh token** (long-lived). The refresh token allows the client to obtain a new access token without re-authenticating.
-=======
-Authentication is handled via **stateless JWT tokens**. Upon login, the server issues a signed JWT that must be included in the `Authorization` header of every protected request.
->>>>>>> feature/redis-management
-
-Token invalidation is handled through a `tokens` table in the database:
-
-```
-tokens
-├── id
-├── token (String)
-├── expired (boolean)
-├── revoked (boolean)
-└── user_id (FK)
-```
-
-<<<<<<< HEAD
-On logout, the token is marked as `expired = true` and `revoked = true`, preventing reuse even if the JWT itself has not yet expired. The `logout-all` endpoint revokes every active token associated with the user across all devices.
-=======
-On logout, the token is marked as `expired = true` and `revoked = true`, preventing reuse even if the JWT itself has not yet expired.
->>>>>>> feature/redis-management
-
-The `JwtAuthFilter` intercepts every request, validates the token signature, and checks the database to ensure the token has not been revoked.
+- **JWT-based authentication** with separate access tokens (short-lived) and refresh tokens (long-lived)
+- **Token whitelist** — access tokens are tracked in a `tokens` table with `expired` and `revoked` fields
+- **Refresh token rotation** — single-use refresh tokens stored as SHA-256 hashes; each refresh invalidates the previous token
+- **Redis blacklist** — revoked access tokens are cached in Redis for fast validation without DB hits
+- **Session revocation** — `POST /auth/logout` revokes the current session; `POST /auth/logout-all` revokes all active sessions for a user
+- **Role-Based Access Control (RBAC)** — `USER` and `ADMIN` roles with endpoint-level authorization
+- **Stateless sessions** — no server-side session state; fully JWT-driven
 
 ---
 
-## 🚀 Getting Started
+## 📦 Modules
+
+### ✅ Auth Module (Complete)
+- `POST /api/v1/auth/register` — user registration
+- `POST /api/v1/auth/login` — login with access + refresh token response
+- `POST /api/v1/auth/refresh` — rotate refresh token
+- `POST /api/v1/auth/logout` — revoke current session
+- `POST /api/v1/auth/logout-all` — revoke all sessions
+
+### ✅ Category Module (Complete)
+- Hierarchical categories with recursive parent/child relationship
+- Soft delete pattern — categories are deactivated, never hard deleted
+- `GET /api/v2/categories` — all active categories
+- `GET /api/v2/categories/{id}` — category by ID
+- `GET /api/v2/categories/root-categories` — top-level categories only
+- `POST /api/v2/categories/create` — create category (with optional parent)
+- `DELETE /api/v2/categories/{id}` — soft deactivate category
+
+### 🔄 In Progress
+- `Product` — catalog management with category and inventory relations
+- `Inventory` — stock tracking with movement history
+- `Cart` + `CartItem` — shopping cart logic with stock validation
+- `Payment` — polymorphic payment processing (Card, PayPal, Transfer)
+- `Order` — created only upon payment confirmation
+
+---
+
+## 🗂️ Entity Overview
+
+```
+User ──────────── Token (access token whitelist)
+  │
+  └──────────────── RefreshToken (hashed, single-use rotation)
+  │
+  └──────────────── Order ──── OrderItem ──── Product
+                      │
+                    Cart ───── CartItem ───── Product
+                                                │
+                                           Category (hierarchical)
+                                                │
+                                           Inventory ── InventoryMovement
+```
+
+---
+
+## ⚙️ Running Locally
 
 ### Prerequisites
+- Java 21
+- Docker & Docker Compose
 
-- Java 21+
-- PostgreSQL 15+ running locally or via Docker
-- Maven (or use the included `./mvnw` wrapper)
-
-### 1. Clone the repository
+### Steps
 
 ```bash
+# Clone the repository
 git clone https://github.com/JonathanDiazDev/E-commerce-Back-end.git
 cd E-commerce-Back-end
-```
 
-### 2. Configure the database
+# Start PostgreSQL and Redis with Docker
+docker-compose up -d
 
-Create a PostgreSQL database:
-
-```sql
-CREATE DATABASE ecommerce_db;
-```
-
-Edit `src/main/resources/application.properties`:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce_db
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-app.jwt.secret=your_super_secret_key_here
-app.jwt.expiration=86400000
-<<<<<<< HEAD
-app.jwt.refresh-expiration=604800000
-=======
->>>>>>> feature/redis-management
-```
-
-### 3. Run the application
-
-```bash
+# Run the application
 ./mvnw spring-boot:run
 ```
 
-The API will be available at `http://localhost:8080`.
-
----
-
-## 📡 API Endpoints
-
-### Auth
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `POST` | `/api/auth/register` | Register a new user | ❌ |
-<<<<<<< HEAD
-| `POST` | `/api/auth/login` | Authenticate — returns access + refresh token | ❌ |
-| `POST` | `/api/auth/refresh-token` | Issue a new access token using the refresh token | ✅ |
-| `POST` | `/api/auth/logout` | Invalidate the current session token | ✅ |
-| `POST` | `/api/auth/logout-all` | Invalidate all active tokens for the user | ✅ |
-
-> 📝 All protected endpoints require the header: `Authorization: Bearer <token>`
-
-> ⚙️ **Product** and **Cart** endpoints are under active development.
-
-=======
-| `POST` | `/api/auth/login` | Authenticate and receive JWT | ❌ |
-| `POST` | `/api/auth/logout` | Invalidate current token | ✅ |
-
-### Products
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/products` | List all products | ❌ |
-| `GET` | `/api/products/{id}` | Get product by ID | ❌ |
-| `POST` | `/api/products` | Create a new product | ✅ ADMIN |
-| `PUT` | `/api/products/{id}` | Update a product | ✅ ADMIN |
-| `DELETE` | `/api/products/{id}` | Delete a product | ✅ ADMIN |
-
-### Cart
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| `GET` | `/api/cart` | Get current user's cart | ✅ |
-| `POST` | `/api/cart/items` | Add item to cart | ✅ |
-| `PUT` | `/api/cart/items/{id}` | Update item quantity | ✅ |
-| `DELETE` | `/api/cart/items/{id}` | Remove item from cart | ✅ |
-
-> 📝 All protected endpoints require the header: `Authorization: Bearer <token>`
-
->>>>>>> feature/redis-management
----
-
-## 🧪 Testing the API
-
-You can test the endpoints using [Postman](https://www.postman.com/) or any REST client.
-
-**Example — Register a user:**
-
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Jonathan",
-    "email": "jonathan@example.com",
-    "password": "securePassword123"
-  }'
+### API Documentation
+Once running, Swagger UI is available at:
 ```
-
-**Example — Authenticated request:**
-
-```bash
-<<<<<<< HEAD
-curl -X POST http://localhost:8080/api/auth/logout \
-=======
-curl -X GET http://localhost:8080/api/cart \
->>>>>>> feature/redis-management
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ---
 
-## 🔄 Roadmap
+## 🔒 Security Design Decisions
 
-<<<<<<< HEAD
-- [x] JWT authentication (access + refresh tokens)
-- [x] Token revocation — logout & logout-all
-- [x] Spring Security configuration & JWT filter
-- [x] User registration & login
-- [ ] Product CRUD *(entities defined, endpoints in progress)*
-- [ ] Shopping cart logic *(entities defined, endpoints in progress)*
-=======
-- [x] JWT authentication with token revocation
-- [x] Product CRUD
-- [x] Shopping cart logic
->>>>>>> feature/redis-management
-- [ ] Order management & checkout flow
-- [ ] Docker Compose setup
-- [ ] Swagger / OpenAPI documentation
-- [ ] Unit & integration tests
+**Why store refresh tokens as hashes?**
+Storing raw tokens in the database is a security risk — if the database is compromised, all sessions are exposed. SHA-256 hashing ensures that even with DB access, tokens cannot be reused.
+
+**Why Redis for the blacklist?**
+Checking the DB on every request adds latency. Redis provides O(1) lookup with automatic TTL expiration matching the token's remaining lifetime.
+
+**Why soft delete for categories?**
+Hard deleting a category with associated products would create orphaned records. Soft delete preserves data integrity and allows reactivation without data loss.
 
 ---
 
-## 👤 Author
+## 👨‍💻 Author
 
-**Jonathan Díaz**
-Backend Developer — Java · Spring Boot · PostgreSQL
+**Jonathan Gabriel Díaz Gutiérrez**
+Backend Developer — Java & Spring Boot
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-jonathan--diaz--backend-0A66C2?style=flat-square&logo=linkedin)](https://linkedin.com/in/jonathan-diaz-backend)
-[![GitHub](https://img.shields.io/badge/GitHub-JonathanDiazDev-181717?style=flat-square&logo=github)](https://github.com/JonathanDiazDev)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-jonathan--diaz--backend-blue?logo=linkedin)](https://linkedin.com/in/jonathan-diaz-backend)
+[![GitHub](https://img.shields.io/badge/GitHub-JonathanDiazDev-black?logo=github)](https://github.com/JonathanDiazDev)
