@@ -1,4 +1,4 @@
-package com.jonathan.ecommerce.dto;
+package com.jonathan.ecommerce.dto.response;
 
 public record AuthResponse(
         String accessToken,

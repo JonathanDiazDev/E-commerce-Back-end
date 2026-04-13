@@ -1,9 +1,9 @@
 package com.jonathan.ecommerce.service.impl;
 
-import com.jonathan.ecommerce.dto.AuthRequest;
-import com.jonathan.ecommerce.dto.AuthResponse;
-import com.jonathan.ecommerce.dto.UserRequest;
-import com.jonathan.ecommerce.dto.UserResponse;
+import com.jonathan.ecommerce.dto.request.AuthRequest;
+import com.jonathan.ecommerce.dto.response.AuthResponse;
+import com.jonathan.ecommerce.dto.request.UserRequest;
+import com.jonathan.ecommerce.dto.response.UserResponse;
 import com.jonathan.ecommerce.entity.RefreshToken;
 import com.jonathan.ecommerce.entity.enums.Role;
 import com.jonathan.ecommerce.entity.Token;
@@ -13,6 +13,7 @@ import com.jonathan.ecommerce.repository.TokenRepository;
 import com.jonathan.ecommerce.repository.UserRepository;
 import com.jonathan.ecommerce.service.AuthService;
 import com.jonathan.ecommerce.service.JwtService;
+import com.jonathan.ecommerce.service.TokenBlacklistService;
 import com.jonathan.ecommerce.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,6 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService userDetailsService;
     private final TokenRepository tokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     public UserResponse register(UserRequest request){
@@ -134,6 +136,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String refreshToken, String  accessToken) {
+        long expiration = jwtService.extractExpiration(accessToken).getTime()
+                - System.currentTimeMillis();
+        tokenBlacklistService.blacklistToken(accessToken, expiration);
+
         String hashedToken = HashUtil.hashToken(refreshToken);
         refreshTokenRepository.findByTokenHash(hashedToken)
                 .ifPresent(token -> {
