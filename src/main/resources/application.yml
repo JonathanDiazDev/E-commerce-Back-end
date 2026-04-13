@@ -32,3 +32,12 @@ security:
     secret-key: ${JWT_ACCESS_TOKEN:}
     access-token-expiration: 3600000
     refresh-token-expiration: 86400000
+
+rate-limiting:
+  api:
+    USER:
+      limit: 100
+      window: 60 # segundos
+    ADMIN:
+      limit: 1000
+      window: 60

@@ -3,6 +3,8 @@ package com.jonathan.ecommerce.service.impl;
 import com.jonathan.ecommerce.dto.request.CategoryRequest;
 import com.jonathan.ecommerce.dto.response.CategoryResponse;
 import com.jonathan.ecommerce.entity.Category;
+import com.jonathan.ecommerce.exception.ResourceAlreadyExistsException;
+import com.jonathan.ecommerce.exception.ResourceNotFoundException;
 import com.jonathan.ecommerce.repository.CategoryRepository;
 import com.jonathan.ecommerce.service.CategoryService;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +30,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse createCategory(CategoryRequest request) {
         if (categoryRepository.findByName(request.name()).isPresent()) {
-            throw new RuntimeException("Category with name " + request.name() + " already exists");
+            throw new ResourceAlreadyExistsException("Category with name " + request.name() + " already exists");
         }
         Category category = new  Category();
         category.setName(request.name());
         if (request.parentCategoryId() != null) {
             Category parent = categoryRepository.findById(request.parentCategoryId())
-                    .orElseThrow(() -> new RuntimeException("Parent Category Not Found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Category with id " + request.parentCategoryId() + " not found"));
             category.setParentCategory(parent);
         }
         category.setActive(true);
@@ -45,7 +47,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse findById(Long id) {
         return toResponse(categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category Not Found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Category with id " + id + " not found")));
     }
 
     @Override
@@ -67,7 +69,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deactivateCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category with id " + id + " not found"));
         category.setActive(false);
         categoryRepository.save(category);
     }
