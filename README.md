@@ -26,7 +26,6 @@ This project is the backend of a full-featured e-commerce platform. It exposes a
 - **Session Revocation** — Logout current session or all active sessions simultaneously (`logout-all`)
 - **Spring Security 6** — Role-based access control (RBAC) protecting all sensitive endpoints
 - **Category Management** — Hierarchical categories with parent/child relationships and soft delete pattern
-- **Product Management** — Full CRUD for product catalog with category and inventory relations
 - **Shopping Cart** — Cart creation, item management, and stock validation per user
 - **Input Validation** — Request validation with Jakarta Bean Validation + Hibernate Validator
 - **Layered Architecture** — Controller → Service (interface + impl) → Repository separation of concerns
