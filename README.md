@@ -68,7 +68,7 @@ src/
     │   │   └── impl/       # Service implementations
     │   └── util/           # Shared utilities (HashUtil, etc.)
     └── resources/
-        └── application.properties
+        └── application.yml
 ```
 
 ---
