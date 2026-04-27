@@ -22,6 +22,9 @@ public class Category {
   @Column(nullable = false, unique = true)
   private String name;
 
+  @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+  private List<Product> products;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "parent_category_id")
   private Category parentCategory;
