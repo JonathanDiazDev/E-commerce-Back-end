@@ -6,19 +6,16 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserRequest(
-        @NotBlank(message = "El nombre es obligatorio")
-        String name,
-
-        @NotBlank(message = "El email es obligatorio")
-        @Email(message = "Debe ser un email válido")
+    @NotBlank(message = "Name is required") String name,
+    @NotBlank(message = "Email is required") @Email(message = "It must be a valid email address.")
         String email,
-
-        @NotBlank(message = "La contraseña es obligatoria")
-        @Size(min = 6, max = 20, message = "La contraseña debe tener entre 6 y 20 caracteres")
+    @NotBlank(message = "A password is required.")
+        @Size(
+            min = 12,
+            max = 20,
+            message = "The password must be between 12 and 20 characters long.")
         @Pattern(
-                regexp = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$",
-                message = "La contraseña debe contener al menos una letra y un número"
-        )
-        String password
-) {
-}
+            regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{12,20}$",
+            message =
+                "The password must contain at least one letter, one number, and one special character.")
+        String password) {}

@@ -1,13 +1,14 @@
 package com.jonathan.ecommerce.entity;
 
+import static jakarta.persistence.FetchType.LAZY;
+
 import com.jonathan.ecommerce.entity.enums.CartStatus;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -17,17 +18,17 @@ import java.math.BigDecimal;
 @Table(name = "cart")
 public class Cart {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @JoinColumn(name = "user_id")
-    @ManyToOne(cascade = CascadeType.ALL)
-    private User user;
+  @JoinColumn(name = "user_id")
+  @ManyToOne(fetch = LAZY)
+  private User user;
 
-    private BigDecimal total = BigDecimal.ZERO;
+  private BigDecimal total = BigDecimal.ZERO;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CartStatus cartStatus;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private CartStatus cartStatus;
 }

@@ -15,18 +15,30 @@ import lombok.Setter;
 @Table(name = "inventory")
 public class Inventory {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @JoinColumn(name = "product")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Product product;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "product_id")
+  private Product product;
 
-    @Column(nullable = false)
-    private int quantity;
+  @Column(nullable = false)
+  private Integer quantity = 0;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private InventoryStatus inventoryStatus;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private InventoryStatus inventoryStatus;
+
+  private boolean manualDisabled;
+
+  @PrePersist
+  @PreUpdate
+  private void syncStatusWithQuantity() {
+    if (manualDisabled || (this.quantity != null && this.quantity <= 0)) {
+      this.inventoryStatus = InventoryStatus.OUT_OF_STOCK;
+    } else {
+      this.inventoryStatus = InventoryStatus.IN_STOCK;
+    }
+  }
 }

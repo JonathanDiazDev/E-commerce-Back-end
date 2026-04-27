@@ -7,13 +7,19 @@ import java.util.List;
 
 public interface ProductService {
 
-    ProductResponse  addProduct(ProductRequest request);
-    ProductResponse updateProduct(Long id, ProductRequest request);
-    List<ProductResponse> getAllProducts();
-    ProductResponse getProductById(Long id);
-    List<ProductResponse> getProductsByCategory(String category);
-    ProductResponse getProductsByName(String name);
-    List<ProductResponse> getProductsByPrice(BigDecimal min, BigDecimal max);
-    void deactivateProduct(Long id);
+  ProductResponse addProduct(ProductRequest request);
 
+  ProductResponse updateProduct(Long id, ProductRequest request);
+
+  List<ProductResponse> getAllProducts();
+
+  ProductResponse getProductById(Long id);
+
+  List<ProductResponse> getProductsByCategory(String category);
+
+  ProductResponse getProductsByName(String name);
+
+  List<ProductResponse> getProductsByPrice(BigDecimal min, BigDecimal max);
+
+  void deactivateProduct(Long id);
 }

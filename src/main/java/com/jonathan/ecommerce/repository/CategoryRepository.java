@@ -1,15 +1,22 @@
 package com.jonathan.ecommerce.repository;
 
 import com.jonathan.ecommerce.entity.Category;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    List<Category> findByActiveTrue();
-    Optional<Category> findByName(String name);
-    List<Category> findByParentCategoryIsNullAndActiveTrue();
+  @EntityGraph(attributePaths = {"products"})
+  List<Category> findByActiveTrue();
 
+  @Query("SELECT c FROM Category c LEFT JOIN FETCH c.products WHERE c.name = :name")
+  Optional<Category> findByName(String name);
+
+  @Query(
+      "SELECT c FROM Category c LEFT JOIN FETCH c.products "
+          + "WHERE c.parentCategory IS NULL AND c.active = true")
+  List<Category> findByParentCategoryIsNullAndActiveTrue();
 }
