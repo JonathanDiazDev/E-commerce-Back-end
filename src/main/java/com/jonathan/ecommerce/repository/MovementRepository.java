@@ -27,9 +27,9 @@ public interface MovementRepository extends JpaRepository<InventoryMovement, Lon
               + "JOIN FETCH m.inventory i "
               + "JOIN FETCH i.product p "
               + "JOIN FETCH p.category c "
-              + "WHERE i.id = :inventoryId AND m.type = :type",
+              + "WHERE i.id = :inventoryId AND m.movementType = :type",
       countQuery =
-          "SELECT COUNT(m) FROM InventoryMovement m WHERE m.inventory.id = :inventoryId AND m.type = :type")
+          "SELECT COUNT(m) FROM InventoryMovement m WHERE m.inventory.id = :inventoryId AND m.movementType = :type")
   Page<InventoryMovement> findByInventoryIdAndType(
       @Param("inventoryId") Long inventoryId, @Param("type") MovementType type, Pageable pageable);
 }
