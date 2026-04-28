@@ -13,5 +13,10 @@ public interface MovementService {
       Inventory inventory, Integer quantity, MovementType movementType, String reason);
 
   Page<MovementResponse> getHistoryByProduct(
-      Long productId, int page, int size, MovementSortField sortBy, Sort.Direction direction);
+      Long productId,
+      int page,
+      int size,
+      MovementSortField sortBy,
+      Sort.Direction direction,
+      MovementType type);
 }

@@ -91,14 +91,24 @@ public class MovementServiceImpl implements MovementService {
 
   @Override
   public Page<MovementResponse> getHistoryByProduct(
-      Long productId, int page, int size, MovementSortField sortBy, Sort.Direction direction) {
+      Long productId,
+      int page,
+      int size,
+      MovementSortField sortBy,
+      Sort.Direction direction,
+      MovementType type) {
 
     Sort sort = Sort.by(direction, sortBy.getField());
 
     Pageable pageable = PageRequest.of(page, size, sort);
 
-    Page<InventoryMovement> movementPage =
-        movementRepository.findByInventoryId(productId, pageable);
+    Page<InventoryMovement> movementPage;
+
+    if (type != null) {
+      movementPage = movementRepository.findByInventoryIdAndType(productId, type, pageable);
+    } else {
+      movementPage = movementRepository.findByInventoryId(productId, pageable);
+    }
 
     return movementPage.map(this::toResponse);
   }

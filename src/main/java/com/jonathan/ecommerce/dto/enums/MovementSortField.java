@@ -7,7 +7,7 @@ public enum MovementSortField {
   DATE("date"),
   PRICE("price"),
   QUANTITY("quantity"),
-  PRODUCT_NAME("product.name");
+  PRODUCT_NAME("inventory.product.name");
 
   private final String field;
 
