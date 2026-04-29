@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v3/inventory")
+@RequestMapping("/api/v4/inventory")
 @RequiredArgsConstructor
 public class InventoryController {
   private final InventoryService inventoryService;

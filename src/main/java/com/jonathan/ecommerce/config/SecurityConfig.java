@@ -1,8 +1,11 @@
 package com.jonathan.ecommerce.config;
 
+import com.jonathan.ecommerce.exception.CustomAccessDeniedHandler;
+import com.jonathan.ecommerce.exception.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -24,6 +27,8 @@ public class SecurityConfig {
 
   private final UserDetailsService userDetailsService;
   private final JwtAuthenticationFilter jwtAuthFilter;
+  private final CustomAccessDeniedHandler customAccessDeniedHandler;
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
   private static final String[] PUBLIC_URLS = {
     "/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**"
@@ -33,7 +38,20 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(
-            auth -> auth.requestMatchers(PUBLIC_URLS).permitAll().anyRequest().authenticated())
+            auth ->
+                auth.requestMatchers(PUBLIC_URLS)
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/products/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET)
+                    .hasAnyRole("USER", "ADMIN")
+                    .anyRequest()
+                    .hasAnyRole("ADMIN"))
+        .exceptionHandling(
+            exception ->
+                exception
+                    .authenticationEntryPoint(customAuthenticationEntryPoint)
+                    .accessDeniedHandler(customAccessDeniedHandler))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
