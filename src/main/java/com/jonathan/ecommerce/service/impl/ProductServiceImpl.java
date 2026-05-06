@@ -12,6 +12,7 @@ import com.jonathan.ecommerce.repository.ProductRepository;
 import com.jonathan.ecommerce.service.ProductService;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,12 +35,13 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public ProductResponse addProduct(ProductRequest request) {
-    if (productRepository.findByName(request.name()).isPresent()) {
+      String normalizedName = request.name().trim().toLowerCase(Locale.ROOT);
+      if (productRepository.existsByName(normalizedName)){
       throw new ResourceAlreadyExistsException(
           "Product with name " + request.name() + " already exists");
     }
     Product product = new Product();
-    product.setName(request.name());
+    product.setName(normalizedName);
     product.setDescription(request.description());
     product.setPrice(request.price());
     if (request.categoryId() != null) {
@@ -54,8 +56,8 @@ public class ProductServiceImpl implements ProductService {
     }
     product.setActive(true);
     product.setStatus(Status.ACTIVE);
-    productRepository.save(product);
-    return toResponse(product);
+    Product saved = productRepository.save(product);
+    return toResponse(saved);
   }
 
   @Override
@@ -113,12 +115,12 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
-  public ProductResponse getProductsByName(String name) {
-    return toResponse(
-        productRepository
-            .findByName(name)
-            .orElseThrow(
-                () -> new ResourceNotFoundException("Product with name " + name + " not found")));
+  public List<ProductResponse> getProductByName(String name) {
+    List<Product> products = productRepository.findByName(name);
+    if (products.isEmpty()) {
+      throw new ResourceNotFoundException("Product with name " + name + " not found");
+    }
+    return products.stream().map(this::toResponse).toList();
   }
 
   @Override

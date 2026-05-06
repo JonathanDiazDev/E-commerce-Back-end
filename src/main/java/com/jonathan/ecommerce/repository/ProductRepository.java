@@ -5,14 +5,15 @@ import com.jonathan.ecommerce.entity.Product;
 import com.jonathan.ecommerce.entity.enums.Status;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
   @EntityGraph(attributePaths = {"category"})
-  Optional<Product> findByName(String name);
+  List<Product> findByName(String name);
 
   @EntityGraph(attributePaths = {"category"})
   List<Product> findByCategory(Category category);
@@ -22,6 +23,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   @EntityGraph(attributePaths = {"category"})
   List<Product> findByCategoryAndStatus(Category category, Status status);
+
+  boolean existsByName(String name);
 
   List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
 
@@ -34,4 +37,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
   List<Product> findByCategoryAndStatusAndActiveTrue(Category category, Status status);
 
   List<Product> findByPriceBetweenAndActiveTrue(BigDecimal min, BigDecimal max);
+
+  Product getProductById(Long productId);
 }

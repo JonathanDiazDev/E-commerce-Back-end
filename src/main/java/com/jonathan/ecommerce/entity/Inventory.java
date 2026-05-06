@@ -32,6 +32,10 @@ public class Inventory {
 
   private boolean manualDisabled;
 
+  @Version
+  @Column(name = "version")
+  private Long version;
+
   @PrePersist
   @PreUpdate
   private void syncStatusWithQuantity() {
@@ -40,5 +44,23 @@ public class Inventory {
     } else {
       this.inventoryStatus = InventoryStatus.IN_STOCK;
     }
+  }
+
+  public boolean hasStock(Integer amount) {
+    return this.quantity >= amount && !this.manualDisabled;
+  }
+
+  public void decrementBy(Integer amount) {
+    if (amount < 0) {
+      throw new IllegalArgumentException("Cannot decrement by negative amount");
+    }
+    this.quantity -= amount;
+  }
+
+  public void incrementBy(Integer amount) {
+    if (amount < 0) {
+      throw new IllegalArgumentException("Cannot increment by negative amount");
+    }
+    this.quantity += amount;
   }
 }

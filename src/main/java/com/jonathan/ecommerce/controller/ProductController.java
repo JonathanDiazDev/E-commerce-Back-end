@@ -47,8 +47,8 @@ public class ProductController {
   }
 
   @GetMapping("/name")
-  public ResponseEntity<ProductResponse> getProductsByName(@RequestParam String name) {
-    return ResponseEntity.status(HttpStatus.OK).body(productService.getProductsByName(name));
+  public ResponseEntity<List<ProductResponse>> getProductByName(@RequestParam String name) {
+    return ResponseEntity.status(HttpStatus.OK).body(productService.getProductByName(name));
   }
 
   @GetMapping("/price")

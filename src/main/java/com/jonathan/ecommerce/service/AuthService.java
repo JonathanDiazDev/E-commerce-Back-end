@@ -4,6 +4,7 @@ import com.jonathan.ecommerce.dto.request.AuthRequest;
 import com.jonathan.ecommerce.dto.request.UserRequest;
 import com.jonathan.ecommerce.dto.response.AuthResponse;
 import com.jonathan.ecommerce.dto.response.UserResponse;
+import com.jonathan.ecommerce.entity.User;
 
 public interface AuthService {
   UserResponse register(UserRequest request);
@@ -15,4 +16,6 @@ public interface AuthService {
   void logout(String refreshToken, String accessToken);
 
   void logoutAll(String email);
+
+  User getAuthenticatedUser();
 }

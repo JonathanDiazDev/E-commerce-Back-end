@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,8 +48,8 @@ public class AuthServiceImpl implements AuthService {
       throw new IllegalArgumentException("El email ya está registrado");
     }
     User user = new User();
-    user.setName(request.name());
-    user.setEmail(request.email());
+    user.setName(request.email());
+    user.setEmail(request.name());
     user.setRole(Role.USER);
     user.setPassword(passwordEncoder.encode(request.password()));
     userRepository.save(user);
@@ -166,6 +167,14 @@ public class AuthServiceImpl implements AuthService {
         tokenRepository.findAllByUserIdAndExpiredFalseAndRevokedFalse(user.getId());
     accessTokens.forEach(token -> token.setRevoked(true));
     tokenRepository.saveAll(accessTokens);
+  }
+
+  @Override
+  public User getAuthenticatedUser() {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    return userRepository
+        .findByEmail(email)
+        .orElseThrow(() -> new BadCredentialsException("Usuario no encontrado"));
   }
 
   private void saveUserToken(User user, String jwtToken) {

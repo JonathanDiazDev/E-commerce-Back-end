@@ -2,35 +2,66 @@ spring:
   application:
     name: ecommerce-backend
 
+  mvc:
+    servlet:
+      load-on-startup: 1
+
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5444}/${DB_NAME:ecommerce}
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5444}/${DB_NAME:ecommerce}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:}
-    Hikari:
-      maximum-pool-size: 10 # Número máximo de conexiones abiertas
-      minimum-idle: 5      # Conexiones mínimas siempre listas
-      idle-timeout: 300000 # 5 minutos
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
       connection-timeout: 20000
+
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
+    consumer:
+      group-id: inventory-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.jonathan.ecommerce.dto.request"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  # Movido: Ahora 'mail' está al mismo nivel que 'kafka' y 'datasource'
+  mail:
+    host: ${MAIL_HOST:127.0.0.1}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   jpa:
     open-in-view: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
       format_sql: true
       jdbc:
         time_zone: UTC
     show-sql: true
     properties:
       hibernate:
+        temp.use_jdbc_metadata_defaults: false
+
   sql:
     init:
-      mode: always
+      mode: never
 
-  # Configuraci�n para Redis
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 60000
@@ -45,7 +76,7 @@ rate-limiting:
   api:
     USER:
       limit: 100
-      window: 60 # segundos
+      window: 60
     ADMIN:
       limit: 1000
       window: 60

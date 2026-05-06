@@ -49,37 +49,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       try {
         authenticate(jwt, request);
       } catch (Exception e) {
-        logger.error("JWT Authentication failed: Security context could not be established");
+        logger.error("JWT Authentication failed: Security context could not be established: ", e);
       }
     }
 
     chain.doFilter(request, response);
   }
 
-  private boolean isTokenActive(String jwt) {
-    if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
-      log.debug("JWT_BLACKLISTED - Token was revoked");
-      return false;
-    }
+    private boolean isTokenActive(String jwt) {
+        // 1. Primero Redis (Es lo más rápido)
+        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+            log.debug("Token en lista negra");
+            return false;
+        }
 
-    boolean isActive =
-        tokenRepository
-            .findByToken(jwt)
-            .map(
-                t -> {
-                  boolean valid = !t.isExpired() && !t.isRevoked();
-                  if (!valid) {
-                    log.debug("JWT_INACTIVE - expired={} revoked={}", t.isExpired(), t.isRevoked());
-                  }
-                  return valid;
-                })
-            .orElse(false);
-
-    if (!isActive) {
-      log.debug("JWT_NOT_FOUND - Token not in database");
+        // 2. Luego la DB (Solo si es necesario)
+        return tokenRepository.findByToken(jwt)
+                .map(t -> !t.isExpired() && !t.isRevoked())
+                .orElse(false);
     }
-    return isActive;
-  }
 
   private void authenticate(String jwt, HttpServletRequest request) {
     final String userEmail = jwtService.extractUsername(jwt);

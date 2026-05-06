@@ -17,7 +17,7 @@ public interface ProductService {
 
   List<ProductResponse> getProductsByCategory(String category);
 
-  ProductResponse getProductsByName(String name);
+  List<ProductResponse> getProductByName(String name);
 
   List<ProductResponse> getProductsByPrice(BigDecimal min, BigDecimal max);
 

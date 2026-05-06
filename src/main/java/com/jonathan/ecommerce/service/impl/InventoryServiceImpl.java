@@ -11,8 +11,10 @@ import com.jonathan.ecommerce.exception.ResourceNotFoundException;
 import com.jonathan.ecommerce.repository.InventoryRepository;
 import com.jonathan.ecommerce.service.InventoryService;
 import com.jonathan.ecommerce.service.MovementService;
+import com.jonathan.ecommerce.stock.event.StockRestockEventDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class InventoryServiceImpl implements InventoryService {
 
   private final InventoryRepository inventoryRepository;
   private final MovementService movementService;
+  private final ApplicationEventPublisher eventPublisher;
 
   private InventoryResponse toResponse(Inventory inventory) {
     return new InventoryResponse(
@@ -76,6 +79,8 @@ public class InventoryServiceImpl implements InventoryService {
             .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
     inventory.setQuantity(inventory.getQuantity() + quantity);
     inventoryRepository.save(inventory);
+
+    eventPublisher.publishEvent(new StockRestockEventDTO(productId, inventory.getProduct().getName(), quantity, inventory.getQuantity()));
 
     movementService.recordMovement(inventory, quantity, MovementType.IN, reason);
     return toResponse(inventory);
