@@ -41,6 +41,10 @@ public class Order {
   @JoinColumn(name = "cart_id", nullable = false)
   private Cart cart;
 
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "payment_id")
+  Payment payment;
+
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> items = new ArrayList<>();
 
