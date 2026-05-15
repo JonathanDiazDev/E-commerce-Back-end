@@ -4,47 +4,153 @@ spring:
   profiles:
     active: dev
 
+  mvc:
+    servlet:
+      load-on-startup: 1
+
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5444}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    Hikari:
-      maximum-pool-size: 10 # Número máximo de conexiones abiertas
-      minimum-idle: 5      # Conexiones mínimas siempre listas
-      idle-timeout: 300000 # 5 minutos
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5444}/${DB_NAME:ecommerce}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
       connection-timeout: 20000
 
   jpa:
     open-in-view: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: validate
-      format_sql: false
       jdbc:
         time_zone: UTC
-    show-sql: false
     properties:
       hibernate:
+        temp.use_jdbc_metadata_defaults: false
 
-  # Configuraci�n para Redis
+  sql:
+    init:
+      mode: never
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
+      password: ${REDIS_PASSWORD:}
       timeout: 60000
+
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
+    admin:
+      properties:
+        default.api.timeout.ms: 60000
+        request.timeout.ms: 60000
+    consumer:
+      group-id: inventory-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.jonathan.ecommerce.dto"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:2525}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 security:
   jwt:
-    secret-key: ${JWT_ACCESS_TOKEN}
+    secret-key: ${JWT_ACCESS_TOKEN:}
     access-token-expiration: 3600000
     refresh-token-expiration: 86400000
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  api-version: ${STRIPE_API_VERSION:2024-04-10}
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  rate-limiting:
+    enabled: true
+    defaults:
+      endpoint-capacity: 100
+      endpoint-refill-minutes: 1
+      user-capacity: 500
+      user-refill-minutes: 1
+      ip-capacity: 1000
+      ip-refill-minutes: 5
+    endpoints:
+      "/api/v1/auth/login":
+        capacity: 5
+        refill-minutes: 1
+        refill-tokens: 5
+        user-capacity: 10
+        user-refill-minutes: 1
+        user-refill-tokens: 10
+        ip-capacity: 50
+        ip-refill-minutes: 1
+        ip-refill-tokens: 50
+      "/api/v1/auth/register":
+        capacity: 3
+        refill-minutes: 5
+        refill-tokens: 3
+        user-capacity: 0
+        ip-capacity: 20
+        ip-refill-minutes: 5
+        ip-refill-tokens: 20
+      "/api/v1/password-reset/*":
+        capacity: 10
+        refill-minutes: 5
+        user-capacity: 5
+        user-refill-minutes: 1440
+        ip-capacity: 30
+        ip-refill-minutes: 5
+      "/api/v1/auth/refresh":
+        capacity: 100
+        refill-minutes: 1
+        user-capacity: 50
+        user-refill-minutes: 1
+        ip-capacity: 200
+        ip-refill-minutes: 1
+      "/api/v1/order/checkout":
+        capacity: 20
+        refill-minutes: 1
+        user-capacity: 10
+        user-refill-minutes: 1
+        ip-capacity: 100
+        ip-refill-minutes: 1
+        fail-open: false
+      "/api/v1/cart/**":
+        capacity: 200
+        refill-minutes: 1
+        user-capacity: 100
+        user-refill-minutes: 1
+        ip-capacity: 500
+        ip-refill-minutes: 5
+      "/api/v1/products/**":
+        capacity: 500
+        refill-minutes: 1
+        user-capacity: 300
+        user-refill-minutes: 1
+        ip-capacity: 1000
+        ip-refill-minutes: 5
 
 rate-limiting:
   api:
     USER:
       limit: 100
-      window: 60 # segundos
+      window: 60
     ADMIN:
       limit: 1000
       window: 60

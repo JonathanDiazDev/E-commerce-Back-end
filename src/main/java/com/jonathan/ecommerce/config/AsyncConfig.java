@@ -1,5 +1,6 @@
 package com.jonathan.ecommerce.config;
 
+import com.jonathan.ecommerce.entity.enums.EmailType;
 import com.jonathan.ecommerce.stock.event.FailedEmailDTO;
 import java.time.Instant;
 import java.util.concurrent.Executor;
@@ -54,7 +55,8 @@ public class AsyncConfig implements AsyncConfigurer {
 
       if (!emailDestino.equals("Unknown")) {
         FailedEmailDTO dto =
-            new FailedEmailDTO(emailDestino, productName, ex.getMessage(), Instant.now());
+            new FailedEmailDTO(
+                emailDestino, EmailType.UNKNOWN, "{}", ex.getMessage(), Instant.now());
         publisher.publishEvent(dto);
       }
     };

@@ -1,5 +1,9 @@
 package com.jonathan.ecommerce.config;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.ByteArrayCodec;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -14,6 +18,7 @@ public class RedisConfig {
   public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
     RedisTemplate<String, Object> template = new RedisTemplate<>();
     StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+
     GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer =
         new GenericJackson2JsonRedisSerializer();
     template.setHashKeySerializer(stringRedisSerializer);
@@ -22,6 +27,23 @@ public class RedisConfig {
     template.setHashValueSerializer(genericJackson2JsonRedisSerializer);
     template.setConnectionFactory(factory);
     template.afterPropertiesSet();
+
     return template;
+  }
+
+  @Value("${spring.data.redis.port}")
+  private int redisPort;
+
+  @Value("${spring.data.redis.host}")
+  private String redisHost;
+
+  @Bean
+  public RedisClient redisClient() {
+    return RedisClient.create("redis://" + redisHost + ":" + redisPort);
+  }
+
+  @Bean
+  public StatefulRedisConnection<byte[], byte[]> redisConnection(RedisClient redisClient) {
+    return redisClient.connect(new ByteArrayCodec());
   }
 }
