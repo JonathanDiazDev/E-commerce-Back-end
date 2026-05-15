@@ -24,7 +24,7 @@ public class Cart {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = LAZY)
+  @OneToOne(fetch = LAZY)
   @JoinColumn(name = "user_id")
   private User user;
 
@@ -46,7 +46,7 @@ public class Cart {
     }
     return items.stream()
         .filter(item -> item.getProduct() != null && item.getProduct().getPrice() != null)
-        .map(item -> item.getProduct().getPrice().multiply(new BigDecimal(item.getQuantity())))
+        .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 }

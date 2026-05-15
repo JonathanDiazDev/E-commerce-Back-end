@@ -13,7 +13,6 @@ public interface CartMapper {
     @Mapping(source = "total", target = "totalAmount")
     CartResponse toResponse(Cart cart);
 
-    @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "product.name", target = "productName") // Corregido: productName
     @Mapping(source = "product.price", target = "unitPrice")   // Corregido: fuente del precio
     @Mapping(target = "subTotal",

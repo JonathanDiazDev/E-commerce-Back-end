@@ -1,13 +1,15 @@
 package com.jonathan.ecommerce.service.impl;
 
 import com.jonathan.ecommerce.dto.mapper.CartMapper;
+import com.jonathan.ecommerce.dto.request.AddToCartRequest;
+import com.jonathan.ecommerce.dto.request.UpdateQuantityRequest;
 import com.jonathan.ecommerce.dto.response.CartResponse;
 import com.jonathan.ecommerce.entity.*;
 import com.jonathan.ecommerce.exception.*;
 import com.jonathan.ecommerce.repository.*;
-import com.jonathan.ecommerce.service.AuthService;
 import com.jonathan.ecommerce.service.CartService;
 import com.jonathan.ecommerce.service.StockNotificationService;
+import com.jonathan.ecommerce.service.helper.SecurityHelper;
 import java.math.BigDecimal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -27,19 +29,17 @@ public class CartServiceImpl implements CartService {
   private final InventoryRepository inventoryRepository;
   private final CartItemsRepository cartItemsRepository;
   private final CartMapper cartMapper;
-  private final AuthService authService;
+  private final SecurityHelper securityHelper;
   private final StockNotificationService stockNotificationService;
 
   @Override
   @Transactional
-  public CartResponse addItemToCart(Long productId, Integer quantity) {
+  public CartResponse addItemToCart(AddToCartRequest cartRequest) {
+      Long productId = cartRequest.productId();
+      Integer quantity = cartRequest.quantity();
     log.debug("Adding {} units of product {} to cart", quantity, productId);
 
-    if (quantity == null || quantity <= 0) {
-      throw new IllegalArgumentException("Quantity must be greater than 0");
-    }
-
-    User user = authService.getAuthenticatedUser();
+    User user = securityHelper.getCurrentUser();
 
     Product product =
         productRepository
@@ -121,9 +121,10 @@ public class CartServiceImpl implements CartService {
     }
   }
 
-  public CartResponse updateItemQuantity(Long productId, Integer newQuantity) {
-
-    User user = authService.getAuthenticatedUser();
+  @Override
+  public CartResponse updateItemQuantity(Long productId, UpdateQuantityRequest request) {
+      Integer newQuantity = request.quantity();
+    User user = securityHelper.getCurrentUser();
     Cart cart =
         cartRepository
             .findByUserId(user.getId())
@@ -150,8 +151,9 @@ public class CartServiceImpl implements CartService {
     return cartMapper.toResponse(item.getCart());
   }
 
+  @Override
   public CartResponse removeItemFromCart(Long cartItemId) {
-    User user = authService.getAuthenticatedUser();
+    User user = securityHelper.getCurrentUser();
 
     CartItem cartItem =
         cartItemsRepository
@@ -162,7 +164,7 @@ public class CartServiceImpl implements CartService {
       throw new UnauthorizedException("Cannot remove item from another user's cart");
     }
 
-    inventoryRepository.incrementStockAtomic(cartItem.getProduct().getId(), cartItem.getQuantity());
+    inventoryRepository.decrementStockAtomic(cartItem.getProduct().getId(), cartItem.getQuantity());
 
     cartItemsRepository.delete(cartItem);
     log.info("Item removed from cart. Quantity: {} returned to inventory", cartItem.getQuantity());
@@ -170,8 +172,9 @@ public class CartServiceImpl implements CartService {
     return cartMapper.toResponse(cartItem.getCart());
   }
 
+  @Override
   public CartResponse getCart() {
-    User user = authService.getAuthenticatedUser();
+    User user = securityHelper.getCurrentUser();
 
     Cart cart =
         cartRepository
@@ -182,8 +185,9 @@ public class CartServiceImpl implements CartService {
     return cartMapper.toResponse(cart);
   }
 
+  @Override
   public void clearCart() {
-    User user = authService.getAuthenticatedUser();
+    User user = securityHelper.getCurrentUser();
 
     Cart cart =
         cartRepository
@@ -198,4 +202,5 @@ public class CartServiceImpl implements CartService {
     cartItemsRepository.deleteAll(cart.getItems());
     log.info("Cart cleared for user: {}", user.getId());
   }
+
 }
