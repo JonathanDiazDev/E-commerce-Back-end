@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -22,3 +24,12 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       # Esta línea es clave para evitar el error de "PROCESS_ROLES" en algunas versiones
       KAFKA_ENABLE_KRAFT: "false"
+
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: stripe-cli
+    command: listen --api-key sk_test_... --device-name my-device
+    environment:
+      STRIPE_API_KEY: sk_test_...
+    ports:
+      - "9000:9000"
