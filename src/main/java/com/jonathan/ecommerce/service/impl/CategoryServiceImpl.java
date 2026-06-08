@@ -40,8 +40,8 @@ public class CategoryServiceImpl implements CategoryService {
       category.setParentCategory(parent);
     }
     category.setActive(true);
-    categoryRepository.save(category);
-    return toResponse(category);
+    Category saved = categoryRepository.save(category);
+    return toResponse(saved);
   }
 
   @Override

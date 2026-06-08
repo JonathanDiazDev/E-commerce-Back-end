@@ -1,8 +1,11 @@
 package com.jonathan.ecommerce.dto.request;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public record InventoryRequest(
-    @NotNull(message = "Ingrese el id del producto") Long productId,
-    @Min(value = 0, message = "La cantidad debe ser superior a 0") Integer quantity) {}
+    @Positive(message = "El id debe ser positivo") @NotNull(message = "Ingrese el id del producto")
+        Long productId,
+    @Positive(message = "La cantidad debe ser superior a 0")
+        @NotNull(message = "La cantidad es requerida")
+        Integer quantity) {}

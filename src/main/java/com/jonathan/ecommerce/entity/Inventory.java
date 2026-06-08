@@ -32,9 +32,9 @@ public class Inventory {
 
   private boolean manualDisabled;
 
-  @Version
-  @Column(name = "version")
-  private Long version;
+  //  @Version
+  //  @Column(name = "version")
+  //  private Long version;
 
   @PrePersist
   @PreUpdate

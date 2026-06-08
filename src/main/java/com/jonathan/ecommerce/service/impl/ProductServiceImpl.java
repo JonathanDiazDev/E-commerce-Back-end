@@ -35,8 +35,8 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public ProductResponse addProduct(ProductRequest request) {
-      String normalizedName = request.name().trim().toLowerCase(Locale.ROOT);
-      if (productRepository.existsByName(normalizedName)){
+    String normalizedName = request.name().trim().toLowerCase(Locale.ROOT);
+    if (productRepository.existsByName(normalizedName)) {
       throw new ResourceAlreadyExistsException(
           "Product with name " + request.name() + " already exists");
     }
@@ -62,12 +62,13 @@ public class ProductServiceImpl implements ProductService {
 
   @Override
   public ProductResponse updateProduct(Long id, ProductRequest request) {
+    String normalizedName = request.name().trim().toLowerCase(Locale.ROOT);
     Product product =
         productRepository
             .findById(id)
             .orElseThrow(
                 () -> new ResourceNotFoundException("Product with id " + id + " not found"));
-    product.setName(request.name());
+    product.setName(normalizedName);
     product.setDescription(request.description());
     product.setPrice(request.price());
     if (request.categoryId() != null) {

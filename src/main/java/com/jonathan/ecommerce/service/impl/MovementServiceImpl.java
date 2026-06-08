@@ -1,6 +1,6 @@
 package com.jonathan.ecommerce.service.impl;
 
-import com.jonathan.ecommerce.dto.enums.MovementSortField;
+import com.jonathan.ecommerce.dto.request.MovementFilterRequest;
 import com.jonathan.ecommerce.dto.response.MovementResponse;
 import com.jonathan.ecommerce.entity.Inventory;
 import com.jonathan.ecommerce.entity.InventoryMovement;
@@ -77,8 +77,10 @@ public class MovementServiceImpl implements MovementService {
 
     int finalQuantity =
         switch (movementType) {
-          case OUT -> Math.abs(quantity) * -1;
-          case IN -> Math.abs(quantity);
+          case SALE -> Math.abs(quantity) * -1;
+          case RESTOCK -> Math.abs(quantity);
+          case RETURN -> Math.abs(quantity);
+          case ADJUSTMENT -> quantity;
         };
 
     InventoryMovement inventoryMovement = new InventoryMovement();
@@ -90,22 +92,17 @@ public class MovementServiceImpl implements MovementService {
   }
 
   @Override
-  public Page<MovementResponse> getHistoryByProduct(
-      Long productId,
-      int page,
-      int size,
-      MovementSortField sortBy,
-      Sort.Direction direction,
-      MovementType type) {
+  public Page<MovementResponse> getHistoryByProduct(Long productId, MovementFilterRequest request) {
 
-    Sort sort = Sort.by(direction, sortBy.getField());
+    Sort sort = Sort.by(Sort.Direction.fromString(request.direction()), request.sortBy());
 
-    Pageable pageable = PageRequest.of(page, size, sort);
+    Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
 
     Page<InventoryMovement> movementPage;
 
-    if (type != null) {
-      movementPage = movementRepository.findByInventoryIdAndType(productId, type, pageable);
+    if (request.type() != null) {
+      movementPage =
+          movementRepository.findByInventoryIdAndType(productId, request.type(), pageable);
     } else {
       movementPage = movementRepository.findByInventoryId(productId, pageable);
     }

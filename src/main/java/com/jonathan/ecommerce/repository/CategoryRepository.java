@@ -15,13 +15,14 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
   @EntityGraph(attributePaths = {"products"})
   List<Category> findByActiveTrue();
 
-    @Query("""
-    SELECT c 
-    FROM Category c 
-    LEFT JOIN FETCH c.products 
+  @Query(
+      """
+    SELECT c
+    FROM Category c
+    LEFT JOIN FETCH c.products
     WHERE c.name = :name
     """)
-    Optional<Category> findByName(@Param("name") String name);
+  Optional<Category> findByName(@Param("name") String name);
 
   @Query(
       "SELECT c FROM Category c LEFT JOIN FETCH c.products "

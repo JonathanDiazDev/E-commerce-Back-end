@@ -29,6 +29,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
           + "AND i.manualDisabled = false")
   int decrementStockAtomic(@Param("productId") Long productId, @Param("amount") Integer amount);
 
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  Optional<Inventory> findWithLockByProductId(Long productId);
+
   @Modifying
   @Transactional
   @Query(

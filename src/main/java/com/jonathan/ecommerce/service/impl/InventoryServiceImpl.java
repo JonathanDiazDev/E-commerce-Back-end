@@ -1,6 +1,6 @@
 package com.jonathan.ecommerce.service.impl;
 
-import com.jonathan.ecommerce.dto.enums.MovementSortField;
+import com.jonathan.ecommerce.dto.request.MovementFilterRequest;
 import com.jonathan.ecommerce.dto.response.InventoryResponse;
 import com.jonathan.ecommerce.dto.response.MovementResponse;
 import com.jonathan.ecommerce.entity.Inventory;
@@ -16,7 +16,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -36,25 +35,19 @@ public class InventoryServiceImpl implements InventoryService {
   public InventoryResponse getStockDetails(Long productId) {
     return toResponse(
         inventoryRepository
-            .findById(productId)
+            .findByProductId(productId)
             .orElseThrow(
                 () ->
                     new ResourceNotFoundException("Product with id " + productId + " not found")));
   }
 
   @Override
-  public Page<MovementResponse> getMovementHistory(
-      Long productId,
-      int page,
-      int size,
-      MovementSortField sortBy,
-      Sort.Direction direction,
-      MovementType type) {
+  public Page<MovementResponse> getMovementHistory(Long productId, MovementFilterRequest request) {
 
     inventoryRepository
         .findByProductId(productId)
         .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
-    return movementService.getHistoryByProduct(productId, page, size, sortBy, direction, type);
+    return movementService.getHistoryByProduct(productId, request);
   }
 
   @Override
@@ -80,9 +73,11 @@ public class InventoryServiceImpl implements InventoryService {
     inventory.setQuantity(inventory.getQuantity() + quantity);
     inventoryRepository.save(inventory);
 
-    eventPublisher.publishEvent(new StockRestockEventDTO(productId, inventory.getProduct().getName(), quantity, inventory.getQuantity()));
+    eventPublisher.publishEvent(
+        new StockRestockEventDTO(
+            productId, inventory.getProduct().getName(), quantity, inventory.getQuantity()));
 
-    movementService.recordMovement(inventory, quantity, MovementType.IN, reason);
+    movementService.recordMovement(inventory, quantity, MovementType.RESTOCK, reason);
     return toResponse(inventory);
   }
 
@@ -104,9 +99,12 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     inventory.setQuantity(inventory.getQuantity() - quantity);
+    if (inventory.getQuantity() == 0) {
+      inventory.setInventoryStatus(InventoryStatus.OUT_OF_STOCK);
+    }
     inventoryRepository.save(inventory);
 
-    movementService.recordMovement(inventory, quantity, MovementType.OUT, reason);
+    movementService.recordMovement(inventory, quantity, MovementType.SALE, reason);
     return toResponse(inventory);
   }
 }

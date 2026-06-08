@@ -28,6 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
   List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
 
+  @EntityGraph(attributePaths = "category")
   List<Product> findByActiveTrue();
 
   List<Product> findByCategoryAndActiveTrue(Category category);

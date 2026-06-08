@@ -2,12 +2,11 @@ package com.jonathan.ecommerce.repository;
 
 import com.jonathan.ecommerce.entity.StockNotification;
 import jakarta.persistence.LockModeType;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface StockNotificationRepository extends JpaRepository<StockNotification, Long> {

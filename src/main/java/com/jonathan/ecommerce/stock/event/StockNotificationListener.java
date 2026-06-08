@@ -15,6 +15,7 @@ public class StockNotificationListener {
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void handleStockNotification(StockRestockEventDTO stockRestockEventDTO) {
-    notificationService.processNotification(stockRestockEventDTO.productId(), stockRestockEventDTO.totalStock());
+    notificationService.processNotification(
+        stockRestockEventDTO.productId(), stockRestockEventDTO.totalStock());
   }
 }
