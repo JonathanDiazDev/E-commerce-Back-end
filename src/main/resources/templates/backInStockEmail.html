@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Producto disponible!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #F0EDE8; font-family: 'DM Sans', Arial, sans-serif; }
+    </style>
+</head>
+<body style="background-color:#F0EDE8; padding:40px 16px; font-family:'DM Sans',Arial,sans-serif;">
+
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+        <td align="center">
+
+            <!-- WRAPPER -->
+            <table width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px; width:100%;">
+
+                <!-- HEADER -->
+                <tr>
+                    <td style="background-color:#1A1A1A; border-radius:12px 12px 0 0; padding:32px 40px; text-align:center;">
+                        <p style="font-family:'DM Serif Display',Georgia,serif; font-size:26px; color:#FFFFFF; letter-spacing:-0.5px; margin:0;">
+                            🔔 ¡Volvió lo que esperabas!
+                        </p>
+                        <p style="font-size:13px; color:#A0A0A0; margin-top:6px; letter-spacing:1.5px; text-transform:uppercase;">
+                            Alerta de disponibilidad
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- HERO BAND -->
+                <tr>
+                    <td style="background-color:#FFD166; padding:20px 40px;">
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                                <td>
+                                    <p style="font-size:13px; color:#3A3A3A; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Hola,</p>
+                                    <p style="font-family:'DM Serif Display',Georgia,serif; font-size:24px; color:#1A1A1A;" th:text="${userName}">Usuario</p>
+                                </td>
+                                <td align="right">
+                                    <p style="font-size:28px;">✨</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- BODY -->
+                <tr>
+                    <td style="background-color:#FFFFFF; padding:36px 40px;">
+
+                        <p style="font-size:15px; color:#5A5A5A; line-height:1.7; margin-bottom:32px;">
+                            Un producto que tenías en tu lista de deseos acaba de volver a estar disponible.
+                            ¡Date prisa, el stock puede ser limitado!
+                        </p>
+
+                        <!-- Product card -->
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #ECECEC; border-radius:12px; overflow:hidden; margin-bottom:28px;">
+                            <tr>
+                                <!-- Product image placeholder -->
+                                <td width="120" style="background-color:#F3F3F3; padding:20px; vertical-align:middle; text-align:center; border-right:1px solid #ECECEC;">
+                                    <th:block th:if="${productImageUrl}">
+                                        <img th:src="${productImageUrl}" alt="Producto" width="80" style="display:block; border-radius:6px;" />
+                                    </th:block>
+                                    <th:block th:unless="${productImageUrl}">
+                                        <div style="width:80px; height:80px; background:#E8E8E8; border-radius:6px; display:inline-block; line-height:80px; font-size:30px;">📦</div>
+                                    </th:block>
+                                </td>
+                                <td style="padding:20px 24px; vertical-align:top;">
+                                    <!-- Stock badge -->
+                                    <table cellspacing="0" cellpadding="0" border="0" style="margin-bottom:10px;">
+                                        <tr>
+                                            <td style="background-color:#FFF4D1; border-radius:100px; padding:4px 12px;">
+                                                <p style="font-size:11px; font-weight:600; color:#B07800; letter-spacing:0.5px;">● EN STOCK</p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                    <p style="font-size:16px; font-weight:600; color:#1A1A1A; margin-bottom:6px;" th:text="${productName}">Nombre del Producto</p>
+                                    <p style="font-size:13px; color:#A0A0A0; margin-bottom:12px;" th:text="${productDescription}">Descripción breve del producto</p>
+                                    <p style="font-size:20px; font-weight:700; color:#1A1A1A;">$<span th:text="${#numbers.formatDecimal(productPrice, 1, 2)}">0.00</span></p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Stock urgency note -->
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF9EC; border:1px solid #FFE5A0; border-radius:8px; margin-bottom:28px;">
+                            <tr>
+                                <td style="padding:14px 18px;">
+                                    <p style="font-size:13px; color:#7A5500; line-height:1.6;">
+                                        ⏳ <strong>Unidades disponibles:</strong>
+                                        <span th:text="${stockQuantity}">X</span> unidades en stock.
+                                        Este producto tiene alta demanda.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- CTA button -->
+                        <table cellspacing="0" cellpadding="0" border="0" style="width:100%;">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${productUrl}" href="#"
+                                       style="display:inline-block; background-color:#1A1A1A; color:#FFD166; font-size:14px; font-weight:600;
+                                              text-decoration:none; padding:16px 48px; border-radius:100px; letter-spacing:0.5px;">
+                                        Comprar ahora →
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:12px; color:#C0C0C0; text-align:center; margin-top:16px;">
+                            También puedes buscarlo en nuestra tienda: <a th:href="${storeUrl}" href="#" style="color:#A0A0A0;" th:text="${storeUrl}">www.tutienda.com</a>
+                        </p>
+
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td style="background-color:#F9F9F9; border-radius:0 0 12px 12px; padding:24px 40px; border-top:1px solid #ECECEC; text-align:center;">
+                        <p style="font-size:12px; color:#A0A0A0; line-height:1.7;">
+                            Recibiste este email porque registraste tu interés en este producto.<br/>
+                            ¿No quieres más alertas? 
+                            <a th:href="${unsubscribeUrl}" href="#" style="color:#1A1A1A; font-weight:600; text-decoration:none;">Cancelar suscripción</a>
+                        </p>
+                        <p style="font-size:11px; color:#C0C0C0; margin-top:12px;">
+                            Este es un mensaje automático, por favor no respondas a este correo.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>
