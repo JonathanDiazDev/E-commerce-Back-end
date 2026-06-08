@@ -64,7 +64,7 @@ public class EmailServiceImpl implements EmailService {
     Context context = new Context();
     String formattedDate =
         DateTimeFormatter.ofPattern("d MMM yyyy")
-            .withLocale(new Locale("es"))
+            .withLocale(Locale.of("es"))
             .withZone(ZoneId.of("America/Mexico_City"))
             .format(date);
     context.setVariable("registrationDate", formattedDate);
