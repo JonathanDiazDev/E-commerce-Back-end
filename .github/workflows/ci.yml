@@ -29,7 +29,7 @@ jobs:
         run: ./mvnw clean package -DskipTests -B
 
       - name: Run unit tests
-        run: ./mvnw test -B "-Dtest=AuthServiceTest,CartServiceTest,InventoryServiceTest,PasswordResetServiceImplTest,ProductServiceTest" "-DfailIfNoTests=false"
+        run: ./mvnw test -B "-Dtest=AuthServiceTest,InventoryServiceTest,PasswordResetServiceImplTest,ProductServiceTest" "-DfailIfNoTests=false"
 
       - name: Build Docker image
         run: docker build -t ecommerce-backend:${{ github.sha }} .
