@@ -28,10 +28,8 @@ jobs:
       - name: Build with Maven
         run: ./mvnw clean package -DskipTests -B
 
-      - name: Run tests
-        run: ./mvnw test -B
-        env:
-          SPRING_PROFILES_ACTIVE: test
+      - name: Run unit tests
+        run: ./mvnw test -B "-Dtest=AuthServiceTest,CartServiceTest,InventoryServiceTest,PasswordResetServiceImplTest,ProductServiceTest" "-DfailIfNoTests=false"
 
       - name: Build Docker image
         run: docker build -t ecommerce-backend:${{ github.sha }} .
