@@ -19,7 +19,7 @@ public class EmailErrorListener {
     log.info("Saving error log for: {}", event.recipient());
     FailedEmail failedEmail =
         failedEmailRepository
-            .findByRecipientAndProductName(event.recipient(), event.productName())
+            .findByRecipientAndEmailType(event.recipient(), event.emailType())
             .map(
                 existing -> {
                   existing.setErrorMessage(event.errorMessage());
@@ -31,7 +31,8 @@ public class EmailErrorListener {
                 () -> {
                   return FailedEmail.builder()
                       .recipient(event.recipient())
-                      .productName(event.productName())
+                      .emailType(event.emailType())
+                      .payload(event.payload())
                       .errorMessage(event.errorMessage())
                       .occurredAt(event.occurredAt())
                       .retryCount(1)

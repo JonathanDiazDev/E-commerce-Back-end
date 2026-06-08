@@ -19,8 +19,15 @@ public class EmailKafkaProducer {
 
     log.info("Publishing event to Kafka. Topic: {}, Key: {}", KafkaConfig.EMAIL_TOPIC, key);
 
-    kafkaTemplate.send(KafkaConfig.EMAIL_TOPIC, key, request).get();
-
-    log.info("✅ Event successfully sent to Kafka for: {}", key);
+    kafkaTemplate
+        .send(KafkaConfig.EMAIL_TOPIC, key, request)
+        .whenComplete(
+            (result, ex) -> {
+              if (ex != null) {
+                log.error("❌ Kafka send failed for key: {}", key, ex);
+              } else {
+                log.info("✅ Kafka ack received for key: {}", key);
+              }
+            });
   }
 }
