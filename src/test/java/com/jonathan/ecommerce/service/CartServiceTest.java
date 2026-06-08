@@ -98,56 +98,51 @@ public class CartServiceTest {
 
     when(productRepository.findById(any())).thenReturn(Optional.of(product));
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> cartService.addItemToCart(addToCartRequest));
+    assertThrows(IllegalArgumentException.class, () -> cartService.addItemToCart(addToCartRequest));
   }
 
   @Test
   void addItemToCart_InsufficientStock() {
-      Integer quantity = 10;
+    Integer quantity = 10;
 
-      Product product = new Product();
-      product.setId(1L);
-      product.setName("test");
-      product.setPrice(BigDecimal.valueOf(100));
-      AddToCartRequest addToCartRequest = new AddToCartRequest(product.getId(), quantity);
+    Product product = new Product();
+    product.setId(1L);
+    product.setName("test");
+    product.setPrice(BigDecimal.valueOf(100));
+    AddToCartRequest addToCartRequest = new AddToCartRequest(product.getId(), quantity);
 
-      Inventory inventory = new Inventory();
-      inventory.setId(1L);
-      inventory.setQuantity(2);
+    Inventory inventory = new Inventory();
+    inventory.setId(1L);
+    inventory.setQuantity(2);
 
-      when(inventoryRepository.decrementStockAtomic(product.getId(), quantity)).thenReturn(0);
-      when(inventoryRepository.findByProductId(product.getId())).thenReturn(Optional.of(inventory));
-      when(productRepository.findById(any())).thenReturn(Optional.of(product));
+    when(inventoryRepository.decrementStockAtomic(product.getId(), quantity)).thenReturn(0);
+    when(inventoryRepository.findByProductId(product.getId())).thenReturn(Optional.of(inventory));
+    when(productRepository.findById(any())).thenReturn(Optional.of(product));
 
-      assertThrows(
-              InsufficientStockException.class,
-              () -> cartService.addItemToCart(addToCartRequest));
-
+    assertThrows(
+        InsufficientStockException.class, () -> cartService.addItemToCart(addToCartRequest));
   }
 
   @Test
-    void addItemToCart_ManualDisabled(){
-      Integer quantity = 10;
+  void addItemToCart_ManualDisabled() {
+    Integer quantity = 10;
 
-      Product product = new Product();
-      product.setId(1L);
-      product.setName("test");
-      product.setPrice(BigDecimal.valueOf(100));
-      AddToCartRequest addToCartRequest = new AddToCartRequest(product.getId(), quantity);
+    Product product = new Product();
+    product.setId(1L);
+    product.setName("test");
+    product.setPrice(BigDecimal.valueOf(100));
+    AddToCartRequest addToCartRequest = new AddToCartRequest(product.getId(), quantity);
 
-      Inventory inventory = new Inventory();
-      inventory.setId(1L);
-      inventory.setQuantity(2);
-      inventory.setManualDisabled(true);
+    Inventory inventory = new Inventory();
+    inventory.setId(1L);
+    inventory.setQuantity(2);
+    inventory.setManualDisabled(true);
 
-      when(inventoryRepository.decrementStockAtomic(product.getId(), quantity)).thenReturn(0);
-      when(inventoryRepository.findByProductId(product.getId())).thenReturn(Optional.of(inventory));
-      when(productRepository.findById(any())).thenReturn(Optional.of(product));
+    when(inventoryRepository.decrementStockAtomic(product.getId(), quantity)).thenReturn(0);
+    when(inventoryRepository.findByProductId(product.getId())).thenReturn(Optional.of(inventory));
+    when(productRepository.findById(any())).thenReturn(Optional.of(product));
 
-      assertThrows(
-              InsufficientStockException.class,
-              () -> cartService.addItemToCart(addToCartRequest));
+    assertThrows(
+        InsufficientStockException.class, () -> cartService.addItemToCart(addToCartRequest));
   }
 }

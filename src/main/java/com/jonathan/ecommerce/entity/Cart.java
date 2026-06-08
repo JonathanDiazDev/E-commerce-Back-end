@@ -2,6 +2,7 @@ package com.jonathan.ecommerce.entity;
 
 import static jakarta.persistence.FetchType.LAZY;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jonathan.ecommerce.entity.enums.CartStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -25,7 +26,7 @@ public class Cart {
   private Long id;
 
   @OneToOne(fetch = LAZY)
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", unique = true, nullable = false)
   private User user;
 
   @Enumerated(EnumType.STRING)
@@ -40,13 +41,14 @@ public class Cart {
     item.setCart(this);
   }
 
+  @JsonProperty("total") // Esto obliga a Jackson a llamar a la propiedad 'total' en el JSON
   public BigDecimal getTotal() {
     if (items == null || items.isEmpty()) {
       return BigDecimal.ZERO;
     }
     return items.stream()
-        .filter(item -> item.getProduct() != null && item.getProduct().getPrice() != null)
-        .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+        .filter(item -> item.getProduct() != null && item.getUnitPrice() != null)
+        .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
   }
 }

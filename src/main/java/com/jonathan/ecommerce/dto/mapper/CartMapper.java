@@ -10,12 +10,14 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface CartMapper {
 
-    @Mapping(source = "total", target = "totalAmount")
-    CartResponse toResponse(Cart cart);
+  @Mapping(source = "total", target = "totalAmount")
+  CartResponse toResponse(Cart cart);
 
-    @Mapping(source = "product.name", target = "productName") // Corregido: productName
-    @Mapping(source = "product.price", target = "unitPrice")   // Corregido: fuente del precio
-    @Mapping(target = "subTotal",
-            expression = "java(item.getProduct().getPrice().multiply(new java.math.BigDecimal(item.getQuantity())))") // Corregido: paréntesis
-    CartItemResponse toItemResponse(CartItem item);
+  @Mapping(source = "product.name", target = "productName") // Corregido: productName
+  @Mapping(source = "product.price", target = "unitPrice") // Corregido: fuente del precio
+  @Mapping(
+      target = "subTotal",
+      expression =
+          "java(item.getProduct().getPrice().multiply(new java.math.BigDecimal(item.getQuantity())))") // Corregido: paréntesis
+  CartItemResponse toItemResponse(CartItem item);
 }

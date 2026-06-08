@@ -12,24 +12,22 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "cart_item")
+@Table(name = "cart_items")
 public class CartItem {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @JoinColumn(name = "cart")
+  @JoinColumn(name = "cart_id")
   @ManyToOne(fetch = FetchType.LAZY)
   private Cart cart;
 
-  @JoinColumn(name = "product")
+  @JoinColumn(name = "product_id")
   @ManyToOne(fetch = FetchType.LAZY)
   private Product product;
 
   private Integer quantity;
 
   private BigDecimal unitPrice;
-
-  private BigDecimal subTotal;
 }
