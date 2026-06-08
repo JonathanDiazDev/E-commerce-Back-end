@@ -3,25 +3,28 @@ package com.jonathan.ecommerce;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.jonathan.ecommerce.dto.response.AuthResponse;
+import com.jonathan.ecommerce.dto.response.AuthUserResponse;
 import com.jonathan.ecommerce.entity.RefreshToken;
+import com.jonathan.ecommerce.entity.User;
 import com.jonathan.ecommerce.entity.enums.Role;
 import com.jonathan.ecommerce.repository.RefreshTokenRepository;
 import com.jonathan.ecommerce.repository.UserRepository;
-import com.jonathan.ecommerce.service.JwtService;
 import com.jonathan.ecommerce.service.impl.AuthServiceImpl;
+import com.jonathan.ecommerce.service.impl.JwtService;
 import com.jonathan.ecommerce.util.HashUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,53 +40,37 @@ public class AuthServiceTest {
 
   @Test
   void refreshToken_Success() {
-
     String plainToken = "token-real-123";
-    String email = "usuario@test.com";
     String hashedToken = HashUtil.hashToken(plainToken);
+    HttpServletResponse servletResponse = mock(HttpServletResponse.class);
 
-    UserDetails userDetails =
-        org.springframework.security.core.userdetails.User.withUsername(email)
-            .password("password")
-            .authorities("ROLE_USER")
-            .build();
+    com.jonathan.ecommerce.entity.User userEntity = new com.jonathan.ecommerce.entity.User();
+    userEntity.setEmail("usuario@test.com");
+    userEntity.setRole(Role.USER);
 
     RefreshToken storedToken = new RefreshToken();
     storedToken.setRevoked(false);
     storedToken.setExpiresAt(Instant.now().plusSeconds(3600));
-    storedToken.setUser(
-        new com.jonathan.ecommerce.entity.User()); // Asigna un usuario si es necesario
+    storedToken.setUser(userEntity);
+    storedToken.setFamilyId(UUID.fromString(UUID.randomUUID().toString()));
 
-    // Definimos el comportamiento de los Mocks 🃏
     when(refreshTokenRepository.findByTokenHash(hashedToken)).thenReturn(Optional.of(storedToken));
-    when(jwtService.extractUsername(plainToken)).thenReturn(email);
-    when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
     when(jwtService.isRefreshTokenValid(any(), any())).thenReturn(true);
-
-
-    // Creamos la entidad de usuario
-    com.jonathan.ecommerce.entity.User userEntity = new com.jonathan.ecommerce.entity.User();
-    userEntity.setEmail(email);
-    userEntity.setRole(Role.USER);
-
-// Entrenamos al nuevo mock
-    when(userRepository.findByEmail(email)).thenReturn(Optional.of(userEntity));
-    // Mocks para la generación de nuevos tokens
     when(jwtService.generateToken(any())).thenReturn("new-access-token");
     when(jwtService.generateRefreshToken(any())).thenReturn("new-refresh-token");
 
-    // 2. Act (Actuar)
-    AuthResponse response = authServiceImpl.refreshToken(plainToken);
+    AuthUserResponse result = authServiceImpl.refreshToken(plainToken, servletResponse);
 
-    // 3. Assert (Verificar)
-    assertNotNull(response);
-    assertEquals("new-access-token", response.accessToken());
-    assertTrue(storedToken.isRevoked()); // Verificamos que el token viejo SE REVOCÓ
+    assertNotNull(result);
+    assertEquals("usuario@test.com", result.email());
+    assertEquals("USER", result.role());
+    assertTrue(storedToken.isRevoked());
   }
 
   @Test
   void refreshToken_ThrowsException_WhenTokenNotFound() {
     // 1. Arrange
+
     String plainToken = "token-que-no-existe";
     when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(Optional.empty());
 
@@ -92,9 +79,9 @@ public class AuthServiceTest {
         assertThrows(
             BadCredentialsException.class,
             () -> {
-              authServiceImpl.refreshToken(plainToken);
+              authServiceImpl.refreshToken(plainToken, mock(HttpServletResponse.class));
             });
-    assertEquals("Token no encontrado", exception.getMessage());
+    assertEquals("Invalid refresh token", exception.getMessage());
   }
 
   @Test
@@ -103,16 +90,24 @@ public class AuthServiceTest {
     String plainToken = "token-expirado";
     String hashedToken = HashUtil.hashToken(plainToken);
 
+    User userEntity = new User();
+    userEntity.setEmail("test@test.com");
+    userEntity.setRole(Role.USER);
     RefreshToken expiredToken = new RefreshToken();
     expiredToken.setRevoked(false);
+
+    expiredToken.setUser(userEntity);
+    expiredToken.setFamilyId(UUID.randomUUID());
     // Ponemos una fecha de hace 1 hora (ya expiró)
     expiredToken.setExpiresAt(Instant.now().minusSeconds(3600));
 
     when(refreshTokenRepository.findByTokenHash(hashedToken)).thenReturn(Optional.of(expiredToken));
 
     // 2 & 3. Act & Assert
-    assertThrows(BadCredentialsException.class, () -> {
-      authServiceImpl.refreshToken(plainToken);
-    });
+    assertThrows(
+        BadCredentialsException.class,
+        () -> {
+          authServiceImpl.refreshToken(plainToken, mock(HttpServletResponse.class));
+        });
   }
 }
