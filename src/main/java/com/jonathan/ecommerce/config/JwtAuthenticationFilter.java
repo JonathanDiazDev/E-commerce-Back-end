@@ -1,10 +1,10 @@
 package com.jonathan.ecommerce.config;
 
-import com.jonathan.ecommerce.repository.TokenRepository;
-import com.jonathan.ecommerce.service.JwtService;
 import com.jonathan.ecommerce.service.TokenBlacklistService;
+import com.jonathan.ecommerce.service.impl.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -25,7 +25,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final JwtService jwtService;
   private final UserDetailsService userDetailsService;
-  private final TokenRepository tokenRepository;
   private final TokenBlacklistService tokenBlacklistService;
 
   private String extractBearerToken(HttpServletRequest request) {
@@ -43,7 +42,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       @NonNull FilterChain chain)
       throws IOException, ServletException {
 
-    final String jwt = extractBearerToken(request);
+    log.info("Filter ejecutado para: {}", request.getRequestURI());
+    String jwt = extractBearerToken(request);
+
+    if (jwt == null) {
+      jwt = extractCookieToken(request);
+      log.info("JWT desde cookie: {}", jwt != null ? "OK" : "NULL");
+    }
 
     if (jwt != null) {
       try {
@@ -52,22 +57,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.error("JWT Authentication failed: Security context could not be established: ", e);
       }
     }
-
     chain.doFilter(request, response);
   }
 
-    private boolean isTokenActive(String jwt) {
-        // 1. Primero Redis (Es lo más rápido)
-        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
-            log.debug("Token en lista negra");
-            return false;
-        }
-
-        // 2. Luego la DB (Solo si es necesario)
-        return tokenRepository.findByToken(jwt)
-                .map(t -> !t.isExpired() && !t.isRevoked())
-                .orElse(false);
+  private boolean isTokenActive(String jwt) {
+    // 1. Primero Redis (Es lo más rápido)
+    if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+      log.debug("Token en lista negra");
+      return false;
     }
+    return true;
+  }
 
   private void authenticate(String jwt, HttpServletRequest request) {
     final String userEmail = jwtService.extractUsername(jwt);
@@ -77,10 +77,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
+        log.info("Autoridades cargadas para el usuario: {}", userDetails.getAuthorities());
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContextHolder.getContext().setAuthentication(authToken);
       }
     }
+  }
+
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    return request.getServletPath().startsWith("/api/v1/webhooks/");
+  }
+
+  private String extractCookieToken(HttpServletRequest request) {
+    Cookie[] cookies = request.getCookies();
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (cookie.getName().equals("access_token")) {
+          return cookie.getValue();
+        }
+      }
+    }
+    return null;
   }
 }

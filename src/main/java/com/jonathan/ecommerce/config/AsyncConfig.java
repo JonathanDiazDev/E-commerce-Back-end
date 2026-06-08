@@ -37,10 +37,9 @@ public class AsyncConfig implements AsyncConfigurer {
   public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
     return (ex, method, params) -> {
       String emailDestino = "Unknown";
-      String productName = "Unknown";
+
       if (params != null && params.length >= 2) {
         emailDestino = String.valueOf(params[0]);
-        productName = String.valueOf(params[1]);
       }
 
       log.error("--- 🚨 ASYNCHRONOUS FAILURE REPORT ---");

@@ -2,7 +2,6 @@ package com.jonathan.ecommerce.entity;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,38 +9,30 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
-@Getter
 @Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "refresh_token")
-public class RefreshToken {
-
+@Table(name = "password_reset_token")
+public class PasswordResetToken {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(unique = true, nullable = false)
-  private String tokenHash;
-
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", referencedColumnName = "id")
+  @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  private Instant expiresAt;
-
-  private boolean revoked;
-
-  private String replacedByTokenHash;
-
-  @Column(unique = true, nullable = false)
-  private UUID familyId;
+  @Column(nullable = false, unique = true, length = 64)
+  private String tokenHash;
 
   @CreationTimestamp
-  @Column(nullable = false, updatable = false)
+  @Column(updatable = false, nullable = false)
   private Instant createdAt;
 
-  private String userAgent;
+  @Column(nullable = false)
+  private boolean used;
 
-  private String ipAddress;
+  @Column(nullable = false)
+  private Instant expiresAt;
 }

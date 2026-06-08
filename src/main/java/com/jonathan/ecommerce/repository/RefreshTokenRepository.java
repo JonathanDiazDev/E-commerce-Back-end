@@ -4,6 +4,7 @@ import com.jonathan.ecommerce.entity.RefreshToken;
 import com.jonathan.ecommerce.entity.User;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,13 +17,28 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
   Optional<RefreshToken> findByTokenHash(String tokenHash);
 
-  Optional<RefreshToken> findByTokenHashAndUser(String tokenHash, User user);
-
   List<RefreshToken> findAllByUserAndRevokedFalse(User user);
 
   @Modifying
   @Transactional
   @Query(
-      "UPDATE RefreshToken rt SET rt.revoked = true WHERE rt.user = :user AND rt.revoked = false")
-  void revokeAllByUser(@Param("user") User user);
+      """
+    UPDATE RefreshToken rt
+    SET rt.revoked = true
+    WHERE rt.familyId = :familyId
+    """)
+  void revokeAllByFamilyId(@Param("familyId") UUID familyId);
+
+  @Modifying
+  @Transactional
+  @Query(
+      """
+    UPDATE RefreshToken rt
+    SET rt.revoked = true
+    WHERE rt.user.id = :userId
+      AND rt.revoked = false
+""")
+  void revokeAllByUserId(@Param("userId") Long userId);
+
+  List<RefreshToken> findAllByUserIdAndRevokedFalse(Long userId);
 }

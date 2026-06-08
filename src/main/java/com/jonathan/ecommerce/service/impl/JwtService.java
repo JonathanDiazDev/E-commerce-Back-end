@@ -1,4 +1,4 @@
-package com.jonathan.ecommerce.service;
+package com.jonathan.ecommerce.service.impl;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,9 +26,12 @@ public class JwtService {
   private long accessTokenExpiration;
 
   @Value("${security.jwt.refresh-token-expiration}")
-  public long refreshTokenExpiration;
+  private long refreshTokenExpiration;
 
   private static final String TOKEN_TYPE_CLAIM = "type";
+
+  private static final String ACCESS_TOKEN = "access";
+  private static final String REFRESH_TOKEN = "refresh";
 
   @PostConstruct
   public void validateSecretKey() {
@@ -38,7 +42,12 @@ public class JwtService {
   }
 
   public String generateToken(UserDetails userDetails) {
-    return generateToken(new HashMap<>(), userDetails, accessTokenExpiration);
+
+    Map<String, Object> claims = new HashMap<>();
+
+    claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN);
+
+    return generateToken(claims, userDetails, accessTokenExpiration);
   }
 
   private String generateToken(
@@ -47,6 +56,7 @@ public class JwtService {
         "role", userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
 
     return Jwts.builder()
+        .id(UUID.randomUUID().toString())
         .claims(claims)
         .subject(userDetails.getUsername())
         .issuedAt(new Date())
@@ -56,8 +66,11 @@ public class JwtService {
   }
 
   public String generateRefreshToken(UserDetails userDetails) {
+
     Map<String, Object> claims = new HashMap<>();
-    claims.put(TOKEN_TYPE_CLAIM, "refresh");
+
+    claims.put(TOKEN_TYPE_CLAIM, REFRESH_TOKEN);
+
     return generateToken(claims, userDetails, refreshTokenExpiration);
   }
 
@@ -67,15 +80,22 @@ public class JwtService {
 
   private boolean isRefreshToken(String token) {
     String type = extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class));
-    return "refresh".equals(type);
+    return REFRESH_TOKEN.equals(type);
   }
 
   private SecretKey getSigningKey() {
-    return Keys.hmacShaKeyFor(secretKey.getBytes());
+    return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
   }
 
   public boolean isAccessTokenValid(String token, UserDetails userDetails) {
-    return isTokenValid(token, userDetails);
+    return isTokenValid(token, userDetails) && isAccessToken(token);
+  }
+
+  private boolean isAccessToken(String token) {
+
+    String type = extractClaim(token, claims -> claims.get(TOKEN_TYPE_CLAIM, String.class));
+
+    return ACCESS_TOKEN.equals(type);
   }
 
   public boolean isTokenValid(String token, UserDetails userDetails) {
@@ -103,5 +123,9 @@ public class JwtService {
 
   public Date extractExpiration(String token) {
     return extractClaim(token, Claims::getExpiration);
+  }
+
+  public String extractTokenId(String token) {
+    return extractClaim(token, Claims::getId);
   }
 }

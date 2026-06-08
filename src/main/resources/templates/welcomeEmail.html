@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a la tienda</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+    </style>
+</head>
+<body style="background-color:#F0EDE8; padding:40px 16px; font-family:'DM Sans',Arial,sans-serif;">
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr><td align="center">
+    <table width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;">
+
+      <!-- HEADER -->
+      <tr>
+        <td style="background-color:#1A1A1A;border-radius:12px 12px 0 0;padding:40px 40px 32px;text-align:center;">
+          <p style="font-size:40px;margin-bottom:12px;">🎉</p>
+          <p style="font-family:'DM Serif Display',Georgia,serif;font-size:30px;color:#FFFFFF;margin:0;line-height:1.2;">
+            Bienvenido a bordo,<br/>
+            <span style="color:#C8F57A;" th:text="${userName}">Usuario</span>
+          </p>
+          <p style="font-size:13px;color:#A0A0A0;margin-top:10px;letter-spacing:1.5px;text-transform:uppercase;">Tu cuenta está lista</p>
+        </td>
+      </tr>
+
+      <!-- ACCENT BAND -->
+      <tr>
+        <td style="background-color:#C8F57A;padding:16px 40px;text-align:center;">
+          <p style="font-size:13px;color:#2A4A00;font-weight:600;">
+            Verificaste tu cuenta el <span th:text="${registrationDate}">1 Jun 2025</span> ✓
+          </p>
+        </td>
+      </tr>
+
+      <!-- BODY -->
+      <tr>
+        <td style="background-color:#FFFFFF;padding:40px 40px;">
+
+          <p style="font-size:15px;color:#5A5A5A;line-height:1.8;margin-bottom:36px;">
+            Nos alegra que estés aquí. Ya puedes explorar nuestro catálogo, guardar favoritos y hacer tu primera compra. ¡Todo en un solo lugar!
+          </p>
+
+          <!-- Features 3-col -->
+          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:36px;">
+            <tr>
+              <td width="33%" style="padding:16px 12px;text-align:center;vertical-align:top;">
+                <p style="font-size:28px;margin-bottom:10px;">🛍️</p>
+                <p style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:4px;">Explora</p>
+                <p style="font-size:12px;color:#A0A0A0;line-height:1.5;">Miles de productos esperándote</p>
+              </td>
+              <td width="33%" style="padding:16px 12px;text-align:center;vertical-align:top;border-left:1px solid #F0F0F0;border-right:1px solid #F0F0F0;">
+                <p style="font-size:28px;margin-bottom:10px;">❤️</p>
+                <p style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:4px;">Guarda</p>
+                <p style="font-size:12px;color:#A0A0A0;line-height:1.5;">Lista de deseos y alertas de stock</p>
+              </td>
+              <td width="33%" style="padding:16px 12px;text-align:center;vertical-align:top;">
+                <p style="font-size:28px;margin-bottom:10px;">🚀</p>
+                <p style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:4px;">Recibe</p>
+                <p style="font-size:12px;color:#A0A0A0;line-height:1.5;">Envíos rápidos y seguros</p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Welcome coupon (optional, shown when discountCode is present) -->
+          <th:block th:if="${discountCode}">
+            <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#1A1A1A;border-radius:12px;margin-bottom:28px;">
+              <tr>
+                <td style="padding:24px 28px;text-align:center;">
+                  <p style="font-size:12px;color:#A0A0A0;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Regalo de bienvenida</p>
+                  <p style="font-size:32px;font-weight:700;color:#C8F57A;letter-spacing:4px;" th:text="${discountCode}">BIENVENIDO10</p>
+                  <p style="font-size:12px;color:#A0A0A0;margin-top:8px;"><span th:text="${discountPercent}">10</span>% de descuento en tu primera compra</p>
+                </td>
+              </tr>
+            </table>
+          </th:block>
+
+          <!-- CTA -->
+          <table cellspacing="0" cellpadding="0" border="0" style="width:100%;">
+            <tr>
+              <td align="center">
+                <a th:href="${storeUrl}" href="#"
+                   style="display:inline-block;background-color:#1A1A1A;color:#C8F57A;font-size:14px;font-weight:600;text-decoration:none;padding:16px 48px;border-radius:100px;letter-spacing:0.5px;">
+                  Empezar a explorar →
+                </a>
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td style="background-color:#F9F9F9;border-radius:0 0 12px 12px;padding:24px 40px;border-top:1px solid #ECECEC;text-align:center;">
+          <p style="font-size:12px;color:#A0A0A0;line-height:1.7;">
+            ¿Tienes preguntas? Escríbenos a
+            <a th:href="'mailto:' + ${supportEmail}" style="color:#1A1A1A;font-weight:600;text-decoration:none;" th:text="${supportEmail}">soporte@tutienda.com</a>
+          </p>
+          <p style="font-size:11px;color:#C0C0C0;margin-top:12px;">Este es un mensaje automático, por favor no respondas a este correo.</p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

@@ -1,21 +1,28 @@
 package com.jonathan.ecommerce.service;
 
 import com.jonathan.ecommerce.dto.request.AuthRequest;
+import com.jonathan.ecommerce.dto.request.ChangePasswordRequest;
 import com.jonathan.ecommerce.dto.request.UserRequest;
-import com.jonathan.ecommerce.dto.response.AuthResponse;
+import com.jonathan.ecommerce.dto.response.AuthUserResponse;
+import com.jonathan.ecommerce.dto.response.SessionResponse;
 import com.jonathan.ecommerce.dto.response.UserResponse;
-import com.jonathan.ecommerce.entity.User;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 
 public interface AuthService {
   UserResponse register(UserRequest request);
 
-  AuthResponse login(AuthRequest request);
+  AuthUserResponse login(AuthRequest request, HttpServletResponse response);
 
-  AuthResponse refreshToken(String refreshToken);
+  AuthUserResponse refreshToken(String refreshToken, HttpServletResponse response);
 
-  void logout(String refreshToken, String accessToken);
+  void logout(String refreshToken, String accessToken, HttpServletResponse response);
 
-  void logoutAll(String email);
+  void logoutAll();
 
-  User getAuthenticatedUser();
+  void changePassword(ChangePasswordRequest request, HttpServletResponse response);
+
+  AuthUserResponse me();
+
+  List<SessionResponse> getActiveSessions();
 }
