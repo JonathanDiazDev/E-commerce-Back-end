@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Pedido</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #F0EDE8; font-family: 'DM Sans', Arial, sans-serif; }
+    </style>
+</head>
+<body style="background-color:#F0EDE8; padding:40px 16px; font-family:'DM Sans',Arial,sans-serif;">
+
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+        <td align="center">
+
+            <!-- WRAPPER -->
+            <table width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px; width:100%;">
+
+                <!-- HEADER -->
+                <tr>
+                    <td style="background-color:#1A1A1A; border-radius:12px 12px 0 0; padding:32px 40px; text-align:center;">
+                        <p style="font-family:'DM Serif Display',Georgia,serif; font-size:26px; color:#FFFFFF; letter-spacing:-0.5px; margin:0;">
+                            🛍️ Tu pedido está confirmado
+                        </p>
+                        <p style="font-size:13px; color:#A0A0A0; margin-top:6px; letter-spacing:1.5px; text-transform:uppercase;">
+                            Gracias por tu compra
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- HERO BAND -->
+                <tr>
+                    <td style="background-color:#C8F57A; padding:20px 40px;">
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0">
+                            <tr>
+                                <td>
+                                    <p style="font-size:13px; color:#3A3A3A; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Hola,</p>
+                                    <p style="font-family:'DM Serif Display',Georgia,serif; font-size:24px; color:#1A1A1A;" th:text="${userName}">Usuario</p>
+                                </td>
+                                <td align="right">
+                                    <p style="font-size:11px; color:#5A5A5A; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px;">Pedido</p>
+                                    <p style="font-size:20px; font-weight:600; color:#1A1A1A;">#<span th:text="${orderId}">00000</span></p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- BODY -->
+                <tr>
+                    <td style="background-color:#FFFFFF; padding:36px 40px;">
+
+                        <!-- Status pill -->
+                        <table cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;">
+                            <tr>
+                                <td style="background-color:#EAF9CC; border-radius:100px; padding:6px 16px;">
+                                    <p style="font-size:12px; font-weight:600; color:#3A7D00; letter-spacing:0.5px;">✓ &nbsp;PAGO RECIBIDO</p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size:14px; color:#5A5A5A; line-height:1.6; margin-bottom:28px;">
+                            Hemos recibido tu orden y ya está siendo procesada. Te notificaremos cuando tu pedido sea enviado.
+                        </p>
+
+                        <!-- Products table -->
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #ECECEC; border-radius:8px; overflow:hidden; margin-bottom:24px;">
+                            <tr>
+                                <td style="background-color:#F9F9F9; padding:12px 16px; border-bottom:1px solid #ECECEC;">
+                                    <p style="font-size:11px; font-weight:600; color:#A0A0A0; text-transform:uppercase; letter-spacing:1px;">Productos</p>
+                                </td>
+                            </tr>
+                            <tr th:each="producto : ${products}">
+                                <td style="padding:14px 16px; border-bottom:1px solid #F3F3F3;">
+                                    <table width="100%" cellspacing="0" cellpadding="0" border="0">
+                                        <tr>
+                                            <td>
+                                                <p style="font-size:14px; color:#1A1A1A; font-weight:500;" th:text="${producto.name}">Nombre del Producto</p>
+                                                <p style="font-size:12px; color:#A0A0A0; margin-top:2px;">Cant: <span th:text="${producto.quantity}">1</span></p>
+                                            </td>
+                                            <td align="right">
+                                                <p style="font-size:14px; font-weight:600; color:#1A1A1A;">$<span th:text="${#numbers.formatDecimal(producto.price, 1, 2)}">0.00</span></p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Total -->
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#1A1A1A; border-radius:8px; margin-bottom:28px;">
+                            <tr>
+                                <td style="padding:16px 20px;">
+                                    <table width="100%" cellspacing="0" cellpadding="0" border="0">
+                                        <tr>
+                                            <td><p style="font-size:13px; color:#A0A0A0;">Total pagado</p></td>
+                                            <td align="right">
+                                                <p style="font-size:22px; font-weight:600; color:#C8F57A;">$<span th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">0.00</span></p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Shipping info -->
+                        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #ECECEC; border-radius:8px;">
+                            <tr>
+                                <td style="background-color:#F9F9F9; padding:12px 16px; border-bottom:1px solid #ECECEC;">
+                                    <p style="font-size:11px; font-weight:600; color:#A0A0A0; text-transform:uppercase; letter-spacing:1px;">Información de entrega</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:14px 16px;">
+                                    <p style="font-size:13px; color:#5A5A5A; line-height:1.6;" th:text="${shippingAddress}">Dirección de envío</p>
+                                    <p style="font-size:12px; color:#A0A0A0; margin-top:6px;">Tiempo estimado: <strong style="color:#3A3A3A;" th:text="${estimatedDelivery}">3-5 días hábiles</strong></p>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td style="background-color:#F9F9F9; border-radius:0 0 12px 12px; padding:24px 40px; border-top:1px solid #ECECEC; text-align:center;">
+                        <p style="font-size:12px; color:#A0A0A0; line-height:1.7;">
+                            ¿Tienes alguna duda sobre tu pedido? Contáctanos en
+                            <a href="mailto:soporte@tutienda.com" style="color:#1A1A1A; font-weight:600; text-decoration:none;" th:text="${supportEmail}">soporte@tutienda.com</a>
+                        </p>
+                        <p style="font-size:11px; color:#C0C0C0; margin-top:12px;">
+                            Este es un mensaje automático, por favor no respondas a este correo.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

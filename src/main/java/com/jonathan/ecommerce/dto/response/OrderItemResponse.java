@@ -3,8 +3,4 @@ package com.jonathan.ecommerce.dto.response;
 import java.math.BigDecimal;
 
 public record OrderItemResponse(
-        Long productId,
-        String productName,
-        Integer quantity,
-        BigDecimal priceAtPurchase
-) {}
+    Long productId, String productName, Integer quantity, BigDecimal priceAtPurchase) {}

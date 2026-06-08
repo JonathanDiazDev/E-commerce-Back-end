@@ -31,24 +31,24 @@ public class Order {
   @Column(nullable = false)
   private OrderStatus orderStatus;
 
+  @Column(name = "total_amount", nullable = false)
   private BigDecimal totalAmount;
+
+  @Column(name = "stripe_payment_id", unique = true)
+  private String stripePaymentId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
   @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "cart_id", nullable = false)
-  private Cart cart;
-
-  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "payment_id")
-  Payment payment;
+  private Payment payment;
 
   @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<OrderItem> items = new ArrayList<>();
 
-  private void addOrderItem(OrderItem item) {
+  public void addOrderItem(OrderItem item) {
     items.add(item);
     item.setOrder(this);
   }

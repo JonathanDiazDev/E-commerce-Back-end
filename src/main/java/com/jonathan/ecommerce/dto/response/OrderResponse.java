@@ -5,9 +5,8 @@ import java.time.Instant;
 import java.util.List;
 
 public record OrderResponse(
-        Long id,
-        Instant createdAt,
-        String status,
-        BigDecimal totalAmount,
-        List<OrderItemResponse> items
-) {}
+    Long id,
+    Instant createdAt,
+    String status,
+    BigDecimal totalAmount,
+    List<OrderItemResponse> items) {}

@@ -1,0 +1,12 @@
+package com.jonathan.ecommerce.entity.enums;
+
+public enum EventType {
+  ORDER_PLACED,
+  PASSWORD_RESET_REQUESTED,
+  USER_REGISTERED,
+  PAYMENT_RETRY,
+  RESTOCK_EMAIL,
+  ORDER_SHIPPED,
+  ABANDONED_CART,
+  PAYMENT_FAILED
+}
