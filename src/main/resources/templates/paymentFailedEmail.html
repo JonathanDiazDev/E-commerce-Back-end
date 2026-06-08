@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Problema con tu pago</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+    </style>
+</head>
+<body style="background-color:#F0EDE8; padding:40px 16px; font-family:'DM Sans',Arial,sans-serif;">
+<table width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr><td align="center">
+    <table width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;">
+
+      <!-- HEADER -->
+      <tr>
+        <td style="background-color:#1A1A1A;border-radius:12px 12px 0 0;padding:32px 40px;text-align:center;">
+          <p style="font-family:'DM Serif Display',Georgia,serif;font-size:26px;color:#FFFFFF;margin:0;">⚠️ Hubo un problema con tu pago</p>
+          <p style="font-size:13px;color:#A0A0A0;margin-top:6px;letter-spacing:1.5px;text-transform:uppercase;">Acción requerida</p>
+        </td>
+      </tr>
+
+      <!-- ACCENT BAND -->
+      <tr>
+        <td style="background-color:#FF6B6B;padding:20px 40px;">
+          <table width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+            <td>
+              <p style="font-size:13px;color:#fff;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;opacity:0.8;">Hola,</p>
+              <p style="font-family:'DM Serif Display',Georgia,serif;font-size:24px;color:#FFFFFF;" th:text="${userName}">Usuario</p>
+            </td>
+            <td align="right">
+              <p style="font-size:11px;color:#fff;opacity:0.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Pedido</p>
+              <p style="font-size:20px;font-weight:600;color:#FFFFFF;">#<span th:text="${orderId}">00000</span></p>
+            </td>
+          </tr></table>
+        </td>
+      </tr>
+
+      <!-- BODY -->
+      <tr>
+        <td style="background-color:#FFFFFF;padding:36px 40px;">
+
+          <p style="font-size:15px;color:#5A5A5A;line-height:1.7;margin-bottom:28px;">
+            No pudimos procesar el pago de tu pedido. Esto puede ocurrir por saldo insuficiente, datos incorrectos o una restricción de tu banco. Nadie realizó ningún cargo.
+          </p>
+
+          <!-- Error detail -->
+          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF5F5;border:1px solid #FFD5D5;border-radius:8px;margin-bottom:28px;">
+            <tr>
+              <td style="padding:16px 20px;">
+                <p style="font-size:11px;font-weight:600;color:#A0A0A0;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Motivo del rechazo</p>
+                <p style="font-size:14px;color:#D93025;font-weight:500;" th:text="${failureReason}">Fondos insuficientes</p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Order summary -->
+          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #ECECEC;border-radius:8px;overflow:hidden;margin-bottom:28px;">
+            <tr>
+              <td style="background-color:#F9F9F9;padding:12px 16px;border-bottom:1px solid #ECECEC;">
+                <p style="font-size:11px;font-weight:600;color:#A0A0A0;text-transform:uppercase;letter-spacing:1px;">Resumen del pedido</p>
+              </td>
+            </tr>
+            <tr th:each="producto : ${products}">
+              <td style="padding:14px 16px;border-bottom:1px solid #F3F3F3;">
+                <table width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                  <td><p style="font-size:14px;color:#1A1A1A;font-weight:500;" th:text="${producto.name}">Producto</p></td>
+                  <td align="right"><p style="font-size:14px;font-weight:600;color:#1A1A1A;">$<span th:text="${#numbers.formatDecimal(producto.price, 1, 2)}">0.00</span></p></td>
+                </tr></table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 16px;background-color:#F9F9F9;">
+                <table width="100%" cellspacing="0" cellpadding="0" border="0"><tr>
+                  <td><p style="font-size:13px;font-weight:600;color:#1A1A1A;">Total</p></td>
+                  <td align="right"><p style="font-size:16px;font-weight:700;color:#1A1A1A;">$<span th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">0.00</span></p></td>
+                </tr></table>
+              </td>
+            </tr>
+          </table>
+
+          <!-- CTA -->
+          <table cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-bottom:20px;">
+            <tr>
+              <td align="center">
+                <a th:href="${retryPaymentUrl}" href="#"
+                   style="display:inline-block;background-color:#1A1A1A;color:#FF6B6B;font-size:14px;font-weight:600;text-decoration:none;padding:16px 48px;border-radius:100px;letter-spacing:0.5px;">
+                  Reintentar pago →
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <p style="font-size:12px;color:#A0A0A0;text-align:center;line-height:1.6;">
+            Tu carrito sigue guardado. El link expira en <strong style="color:#1A1A1A;" th:text="${linkExpiryHours}">48</strong> horas.
+          </p>
+
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td style="background-color:#F9F9F9;border-radius:0 0 12px 12px;padding:24px 40px;border-top:1px solid #ECECEC;text-align:center;">
+          <p style="font-size:12px;color:#A0A0A0;line-height:1.7;">
+            ¿Necesitas ayuda? Escríbenos a
+            <a th:href="'mailto:' + ${supportEmail}" style="color:#1A1A1A;font-weight:600;text-decoration:none;" th:text="${supportEmail}">soporte@tutienda.com</a>
+          </p>
+          <p style="font-size:11px;color:#C0C0C0;margin-top:12px;">Este es un mensaje automático, por favor no respondas a este correo.</p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
