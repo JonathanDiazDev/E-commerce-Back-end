@@ -74,7 +74,7 @@ erDiagram
     }
     payment {
         bigint id PK
-        bigint order_id UK FK
+        bigint order_id FK
         varchar stripe_payment_intent_id
         numeric amount
         varchar payment_status
