@@ -46,7 +46,7 @@ erDiagram
     }
     cart {
         bigint id PK
-        bigint user_id UK FK
+        bigint user_id FK
         varchar cart_status
     }
     cart_items {
@@ -63,7 +63,7 @@ erDiagram
         numeric total_amount
         varchar stripe_payment_id UK
         bigint user_id FK
-        bigint payment_id UK FK
+        bigint payment_id FK
     }
     order_items {
         bigint id PK
