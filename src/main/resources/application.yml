@@ -20,13 +20,12 @@ spring:
 
   jpa:
     open-in-view: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       jdbc:
         time_zone: UTC
     properties:
       hibernate:
-        temp.use_jdbc_metadata_defaults: false
+        boot.allow_jdbc_metadata_access: true
 
   sql:
     init:
@@ -52,9 +51,17 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.jonathan.ecommerce.dto.*"
+        session.timeout.ms: 45000
+        metadata.max.age.ms: 300000
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        retries: 3
+        acks: all
+        batch.size: 16384
+        linger.ms: 1
+        buffer.memory: 33554432
 
   mail:
     host: ${MAIL_HOST:localhost}
@@ -154,3 +161,7 @@ rate-limiting:
     ADMIN:
       limit: 1000
       window: 60
+
+logging:
+  level:
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR

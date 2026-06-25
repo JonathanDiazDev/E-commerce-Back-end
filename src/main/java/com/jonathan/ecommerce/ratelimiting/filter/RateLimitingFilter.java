@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -33,6 +34,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 @Component
 @RequiredArgsConstructor
+@Profile("!test")
 @Slf4j
 public class RateLimitingFilter extends OncePerRequestFilter {
 
@@ -221,8 +223,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
   protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
     // Skip rate limiting for health checks and public endpoints
     String path = request.getRequestURI();
-    return path.startsWith("/api/v1/webhooks/")
-        || path.equals("/health")
-        || path.equals("/actuator/health");
+    return path.equals("/health") || path.equals("/actuator/health");
   }
 }

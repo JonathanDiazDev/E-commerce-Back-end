@@ -1,28 +1,23 @@
 spring:
   flyway:
-    enabled: false
+    baseline-on-migrate: true
   data:
     redis:
       host: localhost
       port: 6379
-    autoconfigure:
-      exclude:
-        - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-        - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-        - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: false
-  h2:
-    console:
-      enabled: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 security:
   jwt:
@@ -32,7 +27,6 @@ security:
 app:
   rate-limiting:
     enabled: false
-
 
 stripe:
   secret:

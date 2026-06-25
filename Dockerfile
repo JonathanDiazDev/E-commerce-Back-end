@@ -16,7 +16,7 @@ RUN ./mvnw dependency:go-offline -B
 
 # Ahora copiamos el código fuente y compilamos
 COPY src src
-RUN ./mvnw package -DskipTests -B
+RUN ./mvnw package -DskipTests -Dmaven.test.skip=true -B
 
 # =============================================================
 # Stage 2: Run

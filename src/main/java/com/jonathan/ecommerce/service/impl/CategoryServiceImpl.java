@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
+  public static final String CATEGORY_WITH_ID = "Category with id ";
+  public static final String NOT_FOUND = " not found";
   private final CategoryRepository categoryRepository;
 
   private CategoryResponse toResponse(Category category) {
@@ -36,7 +38,7 @@ public class CategoryServiceImpl implements CategoryService {
               .orElseThrow(
                   () ->
                       new ResourceNotFoundException(
-                          "Category with id " + request.parentCategoryId() + " not found"));
+                          CATEGORY_WITH_ID + request.parentCategoryId() + NOT_FOUND));
       category.setParentCategory(parent);
     }
     category.setActive(true);
@@ -49,8 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
     return toResponse(
         categoryRepository
             .findById(id)
-            .orElseThrow(
-                () -> new ResourceNotFoundException("Category with id " + id + " not found")));
+            .orElseThrow(() -> new ResourceNotFoundException(CATEGORY_WITH_ID + id + NOT_FOUND)));
   }
 
   @Override
@@ -70,8 +71,7 @@ public class CategoryServiceImpl implements CategoryService {
     Category category =
         categoryRepository
             .findById(id)
-            .orElseThrow(
-                () -> new ResourceNotFoundException("Category with id " + id + " not found"));
+            .orElseThrow(() -> new ResourceNotFoundException(CATEGORY_WITH_ID + id + NOT_FOUND));
     category.setActive(false);
     categoryRepository.save(category);
   }

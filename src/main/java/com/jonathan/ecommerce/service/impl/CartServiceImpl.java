@@ -42,7 +42,6 @@ public class CartServiceImpl implements CartService {
 
     User user = securityHelper.getCurrentUser();
 
-    // 1. Validar producto
     Product product =
         productRepository
             .findById(productId)
@@ -53,7 +52,6 @@ public class CartServiceImpl implements CartService {
       throw new IllegalArgumentException("Product " + productId + " does not have a valid price.");
     }
 
-    // 2. Bloqueo pesimista de inventario
     Inventory inventory =
         inventoryRepository
             .findWithLockByProductId(productId)
@@ -65,38 +63,27 @@ public class CartServiceImpl implements CartService {
       log.warn("Intento de añadir producto deshabilitado: {}", productId);
       throw new InsufficientStockException("Product is currently disabled.");
     }
-
-    // 3. Obtener o crear carrito
     Cart cart = getOrCreateCart(user);
 
     try {
-
-      // 4. Buscar item existente
       Optional<CartItem> existingItem =
           cartItemsRepository.findByCartIdAndProductId(cart.getId(), product.getId());
 
       if (existingItem.isPresent()) {
-
         CartItem item = existingItem.get();
-
         int newQuantity = item.getQuantity() + quantity;
 
-        // Validar stock TOTAL
         if (inventory.getQuantity() < newQuantity) {
-
           log.warn(
               "Stock insuficiente para producto {}. Requerido: {}, Disponible: {}",
               productId,
               newQuantity,
               inventory.getQuantity());
-
           throw new InsufficientStockException(
               "Not enough stock. Available: " + inventory.getQuantity());
         }
 
         item.setQuantity(newQuantity);
-
-        // Actualizar precio vigente
         item.setUnitPrice(product.getPrice());
 
         log.debug(
@@ -105,16 +92,12 @@ public class CartServiceImpl implements CartService {
             user.getId());
 
       } else {
-
-        // Validar stock inicial
         if (inventory.getQuantity() < quantity) {
-
           log.warn(
               "Stock insuficiente para producto {}. Requerido: {}, Disponible: {}",
               productId,
               quantity,
               inventory.getQuantity());
-
           throw new InsufficientStockException(
               "Not enough stock. Available: " + inventory.getQuantity());
         }
@@ -124,31 +107,22 @@ public class CartServiceImpl implements CartService {
         newItem.setQuantity(quantity);
         newItem.setProduct(product);
         newItem.setUnitPrice(product.getPrice());
-
-        // Mantiene ambos lados sincronizados
         cart.addItem(newItem);
-
         log.debug(
             "Nuevo item creado para el producto {} en el carrito del usuario {}",
             productId,
             user.getId());
       }
 
-      // Hibernate dirty checking + cascade
       cartRepository.save(cart);
-
       log.info("Producto {} añadido con éxito al carrito del usuario {}", productId, user.getId());
-
       return cartMapper.toResponse(cart);
-
     } catch (Exception e) {
-
       log.error(
           "Error crítico al actualizar el carrito para el usuario {}: {}",
           user.getId(),
           e.getMessage(),
           e);
-
       throw e;
     }
   }
@@ -211,8 +185,9 @@ public class CartServiceImpl implements CartService {
     // Asumo que tu método en el repositorio hace un incremento real (ej: quantity + increment)
     inventoryRepository.incrementStockAtomic(cartItem.getProduct().getId(), cartItem.getQuantity());
 
-    // 4. Eliminar el ítem
+    // 4. Eliminar el ítem y removerlo de la colección del carrito
     cartItemsRepository.delete(cartItem);
+    cartItem.getCart().getItems().remove(cartItem);
     log.info("Item removed from cart. Quantity: {} returned to inventory", cartItem.getQuantity());
 
     // 5. Retornar carrito actualizado
@@ -251,7 +226,7 @@ public class CartServiceImpl implements CartService {
       inventoryRepository.incrementStockAtomic(item.getProduct().getId(), item.getQuantity());
     }
 
-    cartItemsRepository.deleteAll(cart.getItems());
+    cart.getItems().clear();
     log.info("Cart cleared for user: {}", user.getId());
   }
 

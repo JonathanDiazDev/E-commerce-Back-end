@@ -1,7 +1,6 @@
 package com.jonathan.ecommerce.service.impl;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
@@ -114,7 +113,17 @@ public class JwtService {
   }
 
   private Claims extractAllClaims(String token) {
-    return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+    try {
+      return Jwts.parser()
+          .verifyWith(getSigningKey())
+          .build()
+          .parseSignedClaims(token)
+          .getPayload();
+    } catch (ExpiredJwtException e) {
+      return e.getClaims();
+    } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+      throw new JwtException("Invalid JWT token or mal formed JWT", e);
+    }
   }
 
   private boolean isTokenExpired(String token) {

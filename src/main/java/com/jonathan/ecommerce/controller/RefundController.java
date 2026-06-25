@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/refunds")
+@RequestMapping("/api/v1/refunds")
 @RequiredArgsConstructor
 public class RefundController {
   private final RefundService refundService;

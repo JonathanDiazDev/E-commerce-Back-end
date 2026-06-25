@@ -3,11 +3,13 @@ package com.jonathan.ecommerce.service.impl;
 import com.jonathan.ecommerce.dto.request.ProductRequest;
 import com.jonathan.ecommerce.dto.response.ProductResponse;
 import com.jonathan.ecommerce.entity.Category;
+import com.jonathan.ecommerce.entity.Inventory;
 import com.jonathan.ecommerce.entity.Product;
 import com.jonathan.ecommerce.entity.enums.Status;
 import com.jonathan.ecommerce.exception.ResourceAlreadyExistsException;
 import com.jonathan.ecommerce.exception.ResourceNotFoundException;
 import com.jonathan.ecommerce.repository.CategoryRepository;
+import com.jonathan.ecommerce.repository.InventoryRepository;
 import com.jonathan.ecommerce.repository.ProductRepository;
 import com.jonathan.ecommerce.service.ProductService;
 import java.math.BigDecimal;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class ProductServiceImpl implements ProductService {
 
   private final ProductRepository productRepository;
   private final CategoryRepository categoryRepository;
+  private final InventoryRepository inventoryRepository;
 
   private ProductResponse toResponse(Product product) {
     return new ProductResponse(
@@ -34,6 +38,7 @@ public class ProductServiceImpl implements ProductService {
   }
 
   @Override
+  @Transactional
   public ProductResponse addProduct(ProductRequest request) {
     String normalizedName = request.name().trim().toLowerCase(Locale.ROOT);
     if (productRepository.existsByName(normalizedName)) {
@@ -57,6 +62,10 @@ public class ProductServiceImpl implements ProductService {
     product.setActive(true);
     product.setStatus(Status.ACTIVE);
     Product saved = productRepository.save(product);
+    Inventory inventory = new Inventory();
+    inventory.setProduct(saved);
+    inventory.setQuantity(request.stock());
+    inventoryRepository.save(inventory);
     return toResponse(saved);
   }
 

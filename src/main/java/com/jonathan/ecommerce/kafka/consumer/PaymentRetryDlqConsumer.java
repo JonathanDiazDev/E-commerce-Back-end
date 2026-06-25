@@ -39,12 +39,13 @@ public class PaymentRetryDlqConsumer {
     failedPaymentEventRepository.save(failedPaymentEvent);
 
     String subject = "❌ Payment retry Failed - Order #" + event.orderId();
+    String safeMessage = exceptionMessage != null ? exceptionMessage : "Unknown error";
     String message =
         "Order "
             + event.orderId()
             + " failed after 6 payment retry attempts.\n"
             + "Error: "
-            + exceptionMessage
+            + safeMessage
             + "\n"
             + "Please investigate manually.";
 

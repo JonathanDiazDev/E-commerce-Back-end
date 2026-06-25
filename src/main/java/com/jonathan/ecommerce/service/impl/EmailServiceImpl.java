@@ -23,6 +23,8 @@ import org.thymeleaf.context.Context;
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
+  public static final String USER_NAME = "userName";
+  public static final String MAIL = "jonadiazg30@gmail.com";
   private final JavaMailSender mailSender;
   private final TemplateEngine templateEngine;
 
@@ -34,7 +36,7 @@ public class EmailServiceImpl implements EmailService {
   public void sendStockAvailabilityEmail(
       String to, String userName, String productName, Integer stock) throws MessagingException {
     Context context = new Context();
-    context.setVariable("userName", userName);
+    context.setVariable(USER_NAME, userName);
     context.setVariable("product", productName);
     context.setVariable("stock", stock);
 
@@ -45,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
 
     helper.setTo(to);
     helper.setSubject("Stock Availability");
-    helper.setFrom("jonadiazg30@gmail.com");
+    helper.setFrom(MAIL);
     helper.setText(htmlContent, true);
     mailSender.send(message);
   }
@@ -68,8 +70,8 @@ public class EmailServiceImpl implements EmailService {
             .withZone(ZoneId.of("America/Mexico_City"))
             .format(date);
     context.setVariable("registrationDate", formattedDate);
-    context.setVariable("userName", name);
-    context.setVariable("supportEmail", "jonadiazg30@gmail.com");
+    context.setVariable(USER_NAME, name);
+    context.setVariable("supportEmail", MAIL);
 
     String htmlContent = templateEngine.process("welcomeEmail", context);
     MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -77,7 +79,7 @@ public class EmailServiceImpl implements EmailService {
 
     helper.setTo(to);
     helper.setSubject("¡Bienvenido!");
-    helper.setFrom("jonadiazg30@gmail.com");
+    helper.setFrom(MAIL);
     helper.setText(htmlContent, true);
     mailSender.send(mimeMessage);
   }
@@ -86,10 +88,10 @@ public class EmailServiceImpl implements EmailService {
   public void sendResetPasswordEmail(String to, String userName, String resetLink)
       throws MessagingException {
     Context context = new Context();
-    context.setVariable("userName", userName);
+    context.setVariable(USER_NAME, userName);
     context.setVariable("resetLink", resetLink);
     context.setVariable("expirationMinutes", 15);
-    context.setVariable("supportEmail", "jonadiazg30@gmail.com");
+    context.setVariable("supportEmail", MAIL);
 
     String htmlContent = templateEngine.process("passwordResetEmail", context);
     MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -97,7 +99,7 @@ public class EmailServiceImpl implements EmailService {
 
     helper.setTo(to);
     helper.setSubject("Restablece tu contraseña, " + userName);
-    helper.setFrom("jonadiazg30@gmail.com");
+    helper.setFrom(MAIL);
     helper.setText(htmlContent, true);
     mailSender.send(mimeMessage);
   }
@@ -105,7 +107,7 @@ public class EmailServiceImpl implements EmailService {
   @Override
   public void sendOrderConfirmationEmail(OrderPlacedEvent event) throws MessagingException {
     Context context = new Context();
-    context.setVariable("userName", event.userName());
+    context.setVariable(USER_NAME, event.userName());
     context.setVariable("orderId", event.orderId());
     context.setVariable("products", event.productNames());
     context.setVariable("totalAmount", event.totalAmount());
@@ -116,7 +118,7 @@ public class EmailServiceImpl implements EmailService {
 
     helper.setTo(event.userEmail());
     helper.setSubject("¡Gracias por tu compra, " + event.userName() + "!");
-    helper.setFrom("jonadiazg30@gmail.com");
+    helper.setFrom(MAIL);
     helper.setText(htmlContent, true);
     mailSender.send(mimeMessage);
   }

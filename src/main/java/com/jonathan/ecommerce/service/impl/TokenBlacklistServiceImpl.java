@@ -3,10 +3,12 @@ package com.jonathan.ecommerce.service.impl;
 import com.jonathan.ecommerce.service.TokenBlacklistService;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile("!test")
 @RequiredArgsConstructor
 public class TokenBlacklistServiceImpl implements TokenBlacklistService {
 

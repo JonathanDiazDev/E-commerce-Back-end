@@ -49,6 +49,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
+  public static final String ACCESS_TOKEN = "access_token";
+  public static final String REFRESH_TOKEN = "refresh_token";
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
@@ -64,6 +67,9 @@ public class AuthServiceImpl implements AuthService {
 
   @Value("${cookie.secure:false}")
   private boolean cookieSecure;
+
+  @Value("${cookie.same-site:Strict}")
+  private String cookieSameSite;
 
   @Override
   @Transactional
@@ -124,10 +130,10 @@ public class AuthServiceImpl implements AuthService {
     saveRefreshToken(user, refreshToken, familyId, userAgent, ipAddress);
 
     response.addHeader(
-        HttpHeaders.SET_COOKIE, buildCookie("access_token", accessToken, 3600L).toString());
+        HttpHeaders.SET_COOKIE, buildCookie(ACCESS_TOKEN, accessToken, 3600L).toString());
     response.addHeader(
         HttpHeaders.SET_COOKIE,
-        buildCookie("refresh_token", refreshToken, 60L * 60L * 24L * 7L).toString());
+        buildCookie(REFRESH_TOKEN, refreshToken, 60L * 60L * 24L * 7L).toString());
 
     log.info("event=LOGIN_SUCCESS email={}", user.getEmail());
 
@@ -138,6 +144,10 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   public AuthUserResponse refreshToken(String refreshToken, HttpServletResponse response) {
     log.info("event=TOKEN_REFRESH_REQUESTED");
+
+    if (refreshToken == null || refreshToken.isEmpty()) {
+      throw new BadCredentialsException("Invalid refresh token");
+    }
 
     String hashedToken = HashUtil.hashToken(refreshToken);
 
@@ -195,10 +205,10 @@ public class AuthServiceImpl implements AuthService {
     saveRefreshToken(user, newRefreshToken, refreshTokenEntity.getFamilyId(), userAgent, ipAddress);
 
     response.addHeader(
-        HttpHeaders.SET_COOKIE, buildCookie("access_token", newAccessToken, 3600L).toString());
+        HttpHeaders.SET_COOKIE, buildCookie(ACCESS_TOKEN, newAccessToken, 3600L).toString());
     response.addHeader(
         HttpHeaders.SET_COOKIE,
-        buildCookie("refresh_token", newRefreshToken, 60L * 60L * 24L * 7L).toString());
+        buildCookie(REFRESH_TOKEN, newRefreshToken, 60L * 60L * 24L * 7L).toString());
 
     log.info(
         "event=TOKEN_ROTATION_SUCCESS email={} familyId={}",
@@ -230,8 +240,8 @@ public class AuthServiceImpl implements AuthService {
               token.setRevoked(true);
               log.info("Refresh token revoked successfully. tokenHash={}", hashedToken);
             });
-    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("access_token", "", 0L).toString());
-    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("refresh_token", "", 0L).toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(ACCESS_TOKEN, "", 0L).toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(REFRESH_TOKEN, "", 0L).toString());
 
     log.info("event=LOGOUT_SUCCESS");
   }
@@ -265,8 +275,8 @@ public class AuthServiceImpl implements AuthService {
 
     refreshTokenRepository.revokeAllByUserId(user.getId());
 
-    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("access_token", "", 0L).toString());
-    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie("refresh_token", "", 0L).toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(ACCESS_TOKEN, "", 0L).toString());
+    response.addHeader(HttpHeaders.SET_COOKIE, buildCookie(REFRESH_TOKEN, "", 0L).toString());
 
     log.info("event=CHANGE_PASSWORD_SUCCESS userId={} ", user.getId());
   }
@@ -313,7 +323,7 @@ public class AuthServiceImpl implements AuthService {
         .secure(cookieSecure)
         .path("/")
         .maxAge(Duration.ofSeconds(maxAgeSeconds))
-        .sameSite("Strict")
+        .sameSite(cookieSameSite)
         .build();
   }
 }

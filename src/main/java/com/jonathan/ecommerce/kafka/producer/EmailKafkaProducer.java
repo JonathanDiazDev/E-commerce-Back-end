@@ -4,10 +4,12 @@ import com.jonathan.ecommerce.dto.request.EmailRequest;
 import com.jonathan.ecommerce.kafka.config.KafkaConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile("!test")
 @Slf4j
 @RequiredArgsConstructor
 public class EmailKafkaProducer {

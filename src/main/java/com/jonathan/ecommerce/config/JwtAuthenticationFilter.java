@@ -8,9 +8,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,10 +29,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private String extractBearerToken(HttpServletRequest request) {
     String header = request.getHeader("Authorization");
+    log.info("Authorization header: '{}'", header);
     if (header == null || !header.startsWith("Bearer ")) {
       return null;
     }
-    return header.substring(7);
+    String token = header.substring(7);
+    return token.isBlank() ? null : token;
   }
 
   @Override
@@ -54,7 +56,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       try {
         authenticate(jwt, request);
       } catch (Exception e) {
-        logger.error("JWT Authentication failed: Security context could not be established: ", e);
+        logger.error("Invalid cookie token: {}", e);
+        Cookie cookie = new Cookie("access_token", null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
       }
     }
     chain.doFilter(request, response);
@@ -85,17 +91,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
   }
 
-  @Override
-  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-    return request.getServletPath().startsWith("/api/v1/webhooks/");
-  }
-
   private String extractCookieToken(HttpServletRequest request) {
     Cookie[] cookies = request.getCookies();
     if (cookies != null) {
       for (Cookie cookie : cookies) {
-        if (cookie.getName().equals("access_token")) {
-          return cookie.getValue();
+        if ("access_token".equals(cookie.getName())) {
+          String val = cookie.getValue();
+          // LOG CRÍTICO: Imprime el valor real para ver qué hay ahí
+          log.info("DEBUG: Cookie name: {}, Value: '{}'", cookie.getName(), val);
+
+          // Si el valor no tiene puntos, no es un JWT.
+          if (val == null || !val.contains(".")) {
+            log.warn("La cookie contiene un valor inválido que no parece JWT: {}", val);
+            return null;
+          }
+          return val;
         }
       }
     }

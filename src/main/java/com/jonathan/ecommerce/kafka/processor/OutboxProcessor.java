@@ -13,11 +13,13 @@ import com.jonathan.ecommerce.kafka.producer.UserRegisteredKafkaProducer;
 import com.jonathan.ecommerce.repository.OutboxRepository;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Profile("!test")
 @RequiredArgsConstructor
 public class OutboxProcessor {
   private final OutboxRepository repository;

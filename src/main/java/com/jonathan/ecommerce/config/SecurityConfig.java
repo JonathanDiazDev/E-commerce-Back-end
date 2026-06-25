@@ -4,6 +4,7 @@ import com.jonathan.ecommerce.exception.CustomAccessDeniedHandler;
 import com.jonathan.ecommerce.exception.CustomAuthenticationEntryPoint;
 import com.jonathan.ecommerce.ratelimiting.filter.RateLimitingFilter;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +15,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -35,7 +35,7 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthFilter;
   private final CustomAccessDeniedHandler customAccessDeniedHandler;
   private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-  private final RateLimitingFilter rateLimitingFilter;
+  private final Optional<RateLimitingFilter> rateLimitingFilter;
 
   private static final String[] PUBLIC_URLS = {
     "/api/v1/auth/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/**"
@@ -51,7 +51,7 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/products/**")
                     .permitAll()
-                    .requestMatchers("/api/webhooks/**")
+                    .requestMatchers("/api/v1/webhooks/**")
                     .permitAll()
                     // Permisos específicos para rutas de POST
                     .requestMatchers(HttpMethod.POST, "/api/v1/order/checkout")
@@ -62,10 +62,6 @@ public class SecurityConfig {
                     .hasAnyRole("USER", "ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/cart/**")
                     .hasAnyRole("USER", "ADMIN")
-                    // Permiso general para otros GET si es necesario
-                    .requestMatchers(HttpMethod.GET, "/api/v1/**")
-                    .hasAnyRole("USER", "ADMIN")
-                    // Todo lo demás requiere autenticación o admin según lo que busques
                     .anyRequest()
                     .authenticated())
         .exceptionHandling(
@@ -76,15 +72,13 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
-        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class);
-    return http.build();
-  }
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-  @Bean
-  public WebSecurityCustomizer webSecurityCustomizer() {
-    // Esto le dice a Spring Security: "Ni siquiera mires estas rutas"
-    return (web) -> web.ignoring().requestMatchers("/api/v1/webhooks/**");
+    // Conditionally add RateLimitingFilter only if it's available
+    rateLimitingFilter.ifPresent(
+        filter -> http.addFilterBefore(filter, JwtAuthenticationFilter.class));
+
+    return http.build();
   }
 
   @Bean
@@ -110,9 +104,10 @@ public class SecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowedHeaders(
+        List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
     configuration.setAllowCredentials(true);
-    configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+    configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
     configuration.setMaxAge(3600L);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

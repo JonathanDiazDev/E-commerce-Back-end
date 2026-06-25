@@ -3,8 +3,10 @@ package com.jonathan.ecommerce.kafka.consumer;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jonathan.ecommerce.dto.request.EmailRequest;
 import com.jonathan.ecommerce.repository.FailedEmailRepository;
+import com.jonathan.ecommerce.repository.ProcessedEventRepository;
 import com.jonathan.ecommerce.service.EmailService;
 import jakarta.mail.MessagingException;
 import java.util.Map;
@@ -17,11 +19,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.MailSendException;
 
 @ExtendWith(MockitoExtension.class)
-public class EmailKafkaConsumerTest {
+class EmailKafkaConsumerTest {
 
   @Mock private EmailService emailService;
 
   @Mock private FailedEmailRepository failedEmailRepository;
+
+  @Mock private ObjectMapper objectMapper;
+
+  @Mock private ProcessedEventRepository processedEventRepository;
 
   @InjectMocks private EmailKafkaConsumer emailKafkaConsumer;
 
@@ -55,7 +61,7 @@ public class EmailKafkaConsumerTest {
             "Laptop",
             "STOCK_AVAILABILITY",
             UUID.randomUUID().toString(),
-            Map.of("totalStock", 10));
+            Map.of("otherKey", "not_a_number"));
 
     assertThrows(
         IllegalArgumentException.class,

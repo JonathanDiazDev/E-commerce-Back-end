@@ -1,538 +1,454 @@
-# 🛒 E-Commerce Backend API
 
-> A production-grade RESTful API for e-commerce operations — built with Java 21, Spring Boot 3, Kafka, Redis, Stripe, and PostgreSQL.
+<div align="center">
 
-[![Java](https://img.shields.io/badge/Java-21-007396?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Kafka](https://img.shields.io/badge/Apache_Kafka-Event_Streaming-231F20?style=flat-square&logo=apachekafka&logoColor=white)](https://kafka.apache.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-Cache_&_Rate_Limiting-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
-[![Stripe](https://img.shields.io/badge/Stripe-Payments-635BFF?style=flat-square&logo=stripe&logoColor=white)](https://stripe.com/)
-[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
-[![CI](https://github.com/JonathanDiazDev/E-commerce-Back-end/actions/workflows/ci.yml/badge.svg)](https://github.com/JonathanDiazDev/E-commerce-Back-end/actions)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+# 🛒 E-Commerce Backend
 
----
+**Arquitectura moderna de backend transaccional para comercio electrónico**  
+Construido con **Java 21**, **Spring Boot 3.5** y una infraestructura basada en **eventos**, diseñado para escalar con consistencia y resiliencia.
 
-## 📌 Overview
+[![Java](https://img.shields.io/badge/Java-21-%23ED8B00?logo=openjdk)](https://adoptium.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-%236DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-%234169E1?logo=postgresql)](https://www.postgresql.org/)
+[![Apache Kafka](https://img.shields.io/badge/Kafka-7.4-%23231F20?logo=apachekafka)](https://kafka.apache.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-%23DC382D?logo=redis)](https://redis.io/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-%232496ED?logo=docker)](https://www.docker.com/)
+[![Stripe](https://img.shields.io/badge/Stripe-Payments-%23635BFF?logo=stripe)](https://stripe.com/)
+[![Tests](https://img.shields.io/badge/Tests-252_passing-%2328a745)](#)
 
-This project is the backend of a full-featured e-commerce platform. It exposes a secure REST API that handles user authentication, product catalog, inventory tracking, shopping cart, order placement, and payment processing via Stripe.
-
-Designed with a layered clean architecture, it focuses on security best practices, event-driven reliability, and production-level patterns: Outbox pattern, DLQ-based retry, three-layer rate limiting, async processing, and structured observability through trace IDs.
+</div>
 
 ---
 
-## ✨ Key Features
+## 📋 Tabla de Contenidos
 
-### 🔐 Security & Authentication
-- **JWT Authentication** — Stateless auth with short-lived access tokens and long-lived refresh tokens (JJWT 0.12.6)
-- **Token Whitelist** — Access tokens tracked in DB with `expired` and `revoked` flags for precise session control
-- **Refresh Token Rotation** — Single-use refresh tokens stored as SHA-256 hashes; each refresh invalidates the previous one
-- **Redis Blacklist** — Revoked tokens cached in Redis for O(1) lookup, no DB hit per request
-- **Session Revocation** — Logout current session or all active sessions simultaneously
-- **Role-Based Access Control** — Spring Security 6 RBAC protecting sensitive endpoints
-
-### 🛍️ Core Domain
-- **Product Catalog** — Full CRUD with category and inventory linkage
-- **Hierarchical Categories** — Parent/child structure with soft delete to preserve data integrity
-- **Inventory Management** — Stock tracking with full movement history, paginated and sortable
-- **Shopping Cart** — Add, update, remove items; pessimistic locking to prevent race conditions
-- **Order Management** — Order placement tied to payment confirmation; full order history per user
-
-### 💳 Payments & Reliability
-- **Stripe Integration** — Payment processing with Stripe PaymentIntents and webhook signature validation
-- **Refunds** — Stripe-backed refund processing via dedicated endpoint
-- **Outbox Pattern** — Order events written atomically with DB state; polled by scheduler for guaranteed delivery
-- **Payment Retry with DLQ** — Failed payment events retried via Kafka; dead-letter queue for unrecoverable failures
-
-### ⚡ Performance & Resilience
-- **Three-Layer Rate Limiting** — Bucket4j + Redis: global endpoint limits, per-user limits, and per-IP limits
-- **Async Processing** — `@Async` with configurable thread pool for non-blocking event handling
-- **Redis Caching** — Session blacklist and rate limit buckets stored in Redis
-- **Database Connection Warmup** — Eager pool initialization on startup to prevent cold-start latency
-
-### 🔍 Observability
-- **Trace ID Filter** — Unique `X-Trace-Id` propagated through every request for end-to-end log correlation
-- **Structured Logging** — Contextual logging across all service layers with SLF4J + Logback
-- **Email Notifications** — Kafka-driven transactional emails via Spring Mail + Thymeleaf templates; failed emails persisted for retry
+- [Descripción General](#-descripción-general)
+- [Características Clave](#-características-clave)
+- [Arquitectura y Patrones de Diseño](#-arquitectura-y-patrones-de-diseño)
+- [Stack Tecnológico](#-stack-tecnológico)
+- [Modelo de Datos](#-modelo-de-datos)
+- [Estrategia de Pruebas](#-estrategia-de-pruebas)
+- [Primeros Pasos](#-primeros-pasos)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
 
 ---
 
-## 🏗️ Tech Stack
+## 🚀 Descripción General
 
-| Layer | Technology |
+Backend completo para una plataforma de e-commerce que expone una API RESTful segura y escalable. Gestiona el ciclo de vida completo de una orden transaccional: desde el registro de usuarios autenticados con **JWT + Refresh Tokens**, pasando por la gestión de carrito de compras con bloqueo pesimista de inventario, hasta el procesamiento de pagos con **Stripe** con reintentos automáticos vía **Kafka**.
+
+El sistema garantiza consistencia eventual entre los servicios a través del **Outbox Pattern**, combinado con un sistema de **Rate Limiting** de tres capas (endpoint, usuario e IP) implementado con **Bucket4j** sobre **Redis** para proteger los endpoints críticos contra abusos.
+
+---
+
+## ✨ Características Clave
+
+### Autenticación y Seguridad
+- **Registro y login** con hashing de contraseñas (BCrypt)
+- **JWT bidireccional**: Access Token (corto) + Refresh Token (duradero) rotados en cada uso
+- **Sesiones múltiples** con detección de dispositivos (IP + User-Agent)
+- **Cierre de sesión** individual o global (invalida todos los refresh tokens)
+- **Cambio de contraseña** seguro con verificación de contraseña actual
+- Endpoints públicos protegidos con **Rate Limiting** asimétrico por ruta
+
+### Catálogo y Productos
+- CRUD completo de productos con categorías
+- Búsqueda por nombre, categoría y rango de precios
+- Inventario por producto con stock atómico y bloqueo pesimista (`PESSIMISTIC_WRITE`)
+- Desactivación lógica de productos y deshabilitación manual de inventario
+
+### Carrito de Compras
+- Creación automática de carrito por usuario (uno activo por usuario)
+- Agregar/actualizar/remover items con control de stock en tiempo real
+- Cálculo de totales en tiempo real
+- Limpieza completa del carrito con devolución de stock
+
+### Órdenes y Pagos
+- **Checkout transaccional**: descuenta inventario con bloqueo pesimista, crea la orden y procesa el pago en una sola transacción
+- Integración con **Stripe Payment Intents** para procesamiento de pagos
+- Manejo de webhooks de Stripe para confirmación asíncrona de pagos
+- **Sistema de reintentos**: si el pago falla, se encola un evento en Kafka con backoff progresivo (5s, 10s, 30s) hasta 3 intentos
+- Pagos fallidos almacenados en tabla `failed_payment_event` con alertas al administrador
+
+### Event-Driven Architecture (Kafka + Outbox Pattern)
+| Topic | Propósito |
 |---|---|
-| Language | Java 21 |
-| Framework | Spring Boot 3.5 |
-| Security | Spring Security 6 + JJWT 0.12.6 |
-| ORM | Spring Data JPA (Hibernate) |
-| Database | PostgreSQL 16 |
-| Cache | Redis (Lettuce client) |
-| Message Broker | Apache Kafka (Confluent 7.4) |
-| Payments | Stripe Java SDK 25.6 |
-| Rate Limiting | Bucket4j 8.10 + Redis |
-| Email | Spring Mail + Thymeleaf |
-| Mapping | MapStruct + Lombok |
-| API Docs | SpringDoc OpenAPI 3 (Swagger UI) |
-| Retry | Spring Retry + Spring AOP |
-| Migrations | Flyway |
-| Testing | JUnit 5 + Mockito + Spring Boot Test |
-| Build | Maven (wrapper included) |
-| Infrastructure | Docker + Docker Compose |
-| CI/CD | GitHub Actions |
+| `order-emails-topic` | Notificaciones de órdenes colocadas |
+| `stock-emails-topic` | Alertas de disponibilidad de stock |
+| `payment-retry-topic` | Reintentos de pago fallidos |
+| `password-reset-topic` | Enlaces de restablecimiento de contraseña |
+| `user-registered-topic` | Bienvenida a nuevos usuarios |
+
+El **Outbox Pattern** garantiza que cada evento se persista en la BD en la misma transacción que la operación de negocio, y un scheduler los publica en Kafka de forma atómica y confiable.
+
+### Rate Limiting (Bucket4j + Redis)
+Protección de tres capas configurable por endpoint:
+
+| Endpoint | Global | Por Usuario | Por IP |
+|---|---|---|---|
+| `/api/v1/auth/login` | 5 req/min | 10 req/min | 50 req/min |
+| `/api/v1/auth/register` | 3 req/5min | — | 20 req/5min |
+| `/api/v1/order/checkout` | 20 req/min | 10 req/min | 100 req/min |
+| `/api/v1/cart/**` | 200 req/min | 100 req/min | 500 req/5min |
+| `/api/v1/products/**` | 500 req/min | 300 req/min | 1000 req/5min |
+
+Soporta **Fail-Open**: si Redis no está disponible, permite el paso (configurable por endpoint).
+
+### Notificaciones por Email
+- Email transaccional con **Thymeleaf** como motor de plantillas
+- Alertas de disponibilidad de stock (stock bajo → notificación)
+- Confirmación de registro y órdenes
+- Enlaces de recuperación de contraseña
+- Alertas administrativas para fallos de pago
+- Reintentos programados para emails fallidos (`EmailRetryScheduler`)
 
 ---
 
-## 📁 Project Structure
-
-```
-src/main/java/com/jonathan/ecommerce/
-├── config/                  # Security, JWT filter, Redis, Async, Stripe configs
-├── controller/              # REST controllers (Auth, Product, Cart, Order, Payment...)
-├── dto/
-│   ├── request/             # Incoming request records
-│   ├── response/            # Outgoing response records
-│   ├── enums/               # DTO-level enums (ErrorCode, SortDirection...)
-│   ├── mapper/              # MapStruct mappers
-│   └── webhook/             # Stripe webhook payload DTOs
-├── entity/
-│   └── enums/               # Domain enums (Role, OrderStatus, PaymentStatus...)
-├── exception/               # Custom exceptions + GlobalExceptionHandler
-├── kafka/
-│   ├── config/              # Kafka topic and serializer config
-│   ├── consumer/            # Order, Email, PaymentRetry, DLQ consumers
-│   ├── producer/            # Order, Email, PaymentRetry producers
-│   ├── processor/           # OutboxProcessor
-│   └── scheduler/           # OutboxScheduler, EmailRetryScheduler
-├── ratelimiting/
-│   ├── annotation/          # @RateLimited custom annotation
-│   ├── aspect/              # AOP-based rate limiting aspect
-│   ├── config/              # Bucket4j + Redis proxy config
-│   ├── exception/           # RateLimitExceededException
-│   └── filter/              # Filter-based rate limiting (SecurityFilterChain)
-├── repository/              # Spring Data JPA repositories
-├── service/                 # Business logic interfaces
-│   ├── impl/                # Service implementations
-│   └── helper/              # Internal service helpers
-└── util/                    # Shared utilities (HashUtil, RequestContextUtil...)
-```
-
----
-
-## 🔐 Security Design
-
-Authentication is handled via **stateless JWT tokens**. Upon login, the server issues a signed access token (short-lived) and a single-use refresh token (long-lived).
-
-**Why hash refresh tokens?**
-Storing raw tokens in the database is a security risk — if the DB is compromised, all sessions are exposed. SHA-256 hashing ensures that even with DB access, tokens cannot be reused.
-
-**Why Redis for the blacklist?**
-Checking the DB on every request adds latency. Redis provides O(1) lookup with automatic TTL expiration matching the token's remaining lifetime.
-
----
-
-## 📨 Event-Driven Architecture
-
-Critical flows are decoupled from the HTTP request via Kafka and the Outbox pattern — guaranteeing **at-least-once delivery** without distributed transactions.
+## 🏗️ Arquitectura y Patrones de Diseño
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     OUTBOX PATTERN FLOWS                         │
-│         (atomic DB write + guaranteed Kafka delivery)            │
+│                        API Gateway                              │
+│                    RateLimitingFilter                            │
+├─────────────────────────────────────────────────────────────────┤
+│                    Security Layer                                │
+│         JwtAuthenticationFilter → SecurityContextHolder          │
+├─────────────────────────────────────────────────────────────────┤
+│                       Controllers                                │
+│   Auth  Cart  Products  Orders  Payments  Categories  Inventory  │
+├─────────────────────────────────────────────────────────────────┤
+│                     Service Layer                                │
+│   AuthServiceImpl  CartServiceImpl  OrderServiceImpl   ...      │
+├─────────────────────────────────────────────────────────────────┤
+│          Repository Layer (Spring Data JPA)                      │
+├─────────────────────────────────────────────────────────────────┤
+│      ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│      │  PostgreSQL   │  │    Redis     │  │  Apache Kafka │       │
+│      │   (Datos)     │  │  (Caché + RL)│  │  (Eventos)    │       │
+│      └──────────────┘  └──────────────┘  └──────────────┘       │
 └─────────────────────────────────────────────────────────────────┘
-
-POST /auth/register
-    │
-    ▼
-AuthService ──► saves User + OutboxEvent(USER_REGISTERED)
-                                    │
-                          OutboxScheduler polls (every 30s)
-                                    │
-                          UserRegisteredProducer ──► Kafka
-                                                        │
-                                          EmailKafkaConsumer ──► welcome email
-
-POST /auth/password-reset
-    │
-    ▼
-PasswordResetService ──► saves Token + OutboxEvent(PASSWORD_RESET_REQUESTED)
-                                    │
-                          OutboxScheduler polls (every 30s)
-                                    │
-                          PasswordResetProducer ──► Kafka
-                                                        │
-                                          EmailKafkaConsumer ──► reset email
-
-POST /orders/checkout
-    │
-    ▼
-OrderService ──► saves Order + OutboxEvent(ORDER_PLACED)
-                                    │
-                          OutboxScheduler polls (every 30s)
-                                    │
-                          OrderKafkaProducer ──► Kafka topic: order.placed
-                                                        │
-                                          OrderKafkaConsumer ──► inventory deduct
-                                          EmailKafkaConsumer ──► confirmation email
-                                                        │
-                                          PaymentRetryProducer (on failure)
-                                                        │
-                                          PaymentRetryDlqConsumer (DLQ)
-
-┌─────────────────────────────────────────────────────────────────┐
-│                     DIRECT FLOWS (no Outbox)                     │
-└─────────────────────────────────────────────────────────────────┘
-
-Stock restock ──► ApplicationEvent ──► EmailKafkaConsumer ──► stock availability email
-Failed emails ──► EmailRetryScheduler polls (every 2 min) ──► retry send
 ```
+
+### Patrones Implementados
+
+| Patrón | Implementación |
+|---|---|
+| **Arquitectura en Capas** | Controller → Service → Repository, con DTOs para desacoplar la API del dominio |
+| **Outbox Pattern** | `OutboxEvent` se persiste en la misma transacción que la operación de negocio; `OutboxScheduler` procesa los eventos pendientes cada 30s y los publica en Kafka |
+| **Event-Driven Architecture** | 5 topics de Kafka para desacoplar el flujo principal (órdenes, pagos, emails) de los procesos secundarios |
+| **Rate Limiting (Token Bucket)** | Tres capas (endpoint, usuario, IP) usando Bucket4j distribuido sobre Redis |
+| **Transactional Outbox** | Garantiza que cada evento se persista atómicamente con su operación de negocio |
+| **Pessimistic Locking** | `findWithLockByProductId` con `PESSIMISTIC_WRITE` para evitar condiciones de carrera en inventario |
+| **Retry Pattern** | Payment retry con backoff progresivo (5s → 10s → 30s) y DLQ para fallos definitivos |
+| **DTO Pattern** | `request/` y `response/` separados de las entidades JPA para control total sobre la serialización |
+| **MapStruct** | Mapeo automático entre entidades y DTOs con configuración `componentModel = spring` |
+| **Strategy Pattern** | Diferentes estrategias de pago (Stripe Payment Intents, Webhooks) |
+| **Null Object / Fail-Open** | Rate Limiting desactivado cuando Redis no está disponible, configurable por endpoint |
 
 ---
 
-## ⚡ Rate Limiting Design
+## 🛠️ Stack Tecnológico
 
-Three independent layers, applied in order on every request:
-
-| Layer | Scope | Backend |
+| Categoría | Tecnología | Versión |
 |---|---|---|
-| Endpoint limit | Per route (global) | Redis Bucket4j |
-| User limit | Per authenticated user | Redis Bucket4j |
-| IP limit | Per source IP | Redis Bucket4j |
-
-Configuration is centralized in `application.yml` — no annotations required on controllers. The filter runs inside the Spring Security chain, after JWT authentication.
+| **Lenguaje** | Java | 21 (LTS) |
+| **Framework** | Spring Boot | 3.5.13 |
+| **Seguridad** | Spring Security + JWT (jjwt 0.13) | — |
+| **Base de Datos** | PostgreSQL | 16 |
+| **ORM** | Hibernate / Spring Data JPA | — |
+| **Migraciones** | Flyway | — |
+| **Mensajería** | Apache Kafka (vía Spring Kafka) | 7.4 |
+| **Caché / Distribuido** | Redis + Lettuce | 7 |
+| **Rate Limiting** | Bucket4j (core + lettuce) | 8.14 |
+| **Pagos** | Stripe SDK | 26.6 |
+| **Mapper** | MapStruct (+ Lombok binding) | 1.6.3 |
+| **Utilidades** | Lombok, Google Guava, Gson | — |
+| **Documentación API** | SpringDoc OpenAPI (Swagger UI) | 2.8.5 |
+| **Email** | Spring Mail + Thymeleaf (templates) | — |
+| **Containerización** | Docker + Docker Compose | — |
+| **Construcción** | Maven (wrapper incluido) | — |
+| **Pruebas** | JUnit 5, Mockito, AssertJ, Spring Security Test, Testcontainers (PostgreSQL + Kafka) | — |
 
 ---
 
-## 🗂️ Entity Overview
+## 💾 Modelo de Datos
+
+### Entidades Principales
 
 ```
-User ──────── RefreshToken (hashed, single-use)
+User (1) ──── (N) Order
+  │                 │
+  │                 ├── (N) OrderItem ──── Product
+  │                 │
+  │                 └── (1) Payment ──── (N) PaymentAttempt
   │
-  ├────────── Cart ──── CartItem ──── Product
-  │                                      │
-  └────────── Order ─── OrderItem ───────┤
-                │                    Category (hierarchical)
-                │                        │
-              Payment              Inventory ── InventoryMovement
-                │
-         PaymentAttempt
+  ├── (1) Cart ──── (N) CartItem ──── Product
+  │
+  ├── (N) RefreshToken
+  │
+  └── (N) PasswordResetToken
+
+Product (1) ──── (1) Inventory
+  │                       │
+  └── (N) Category        └── (N) InventoryMovement
+
+OutboxEvent ───→ Kafka Topics
+ProcessedEvent ── (idempotencia Kafka)
+FailedEmail ──── (reintentos de email)
+FailedPaymentEvent (pagos fallidos definitivos)
+StockNotification (alertas de stock bajo)
+```
+
+### Outbox Pattern — Flujo de Consistencia
+
+```
+Operación de Negocio (Transacción DB)
+         │
+         ├── INSERT en tabla principal (order, user, etc.)
+         └── INSERT en outbox_event (misma transacción)
+                     │
+                     ▼
+         OutboxScheduler (@Scheduled 30s)
+                     │
+                     ▼
+         OutboxProcessor.processSingleEvent()
+                     │
+              ┌──────┴──────┐
+              ▼              ▼
+         Kafka Topic    outbox_status = SENT / FAILED
+              │
+              ▼
+         EmailKafkaConsumer
+              │
+         (idempotencia vía ProcessedEvent)
 ```
 
 ---
 
-## 📦 API Endpoints
+## 🧪 Estrategia de Pruebas
 
-### Auth
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `POST` | `/api/v1/auth/register` | Register a new user | ❌ |
-| `POST` | `/api/v1/auth/login` | Login — returns access + refresh token | ❌ |
-| `POST` | `/api/v1/auth/refresh` | Rotate refresh token | ❌ |
-| `POST` | `/api/v1/auth/logout` | Revoke current session | ✅ |
-| `POST` | `/api/v1/auth/logout-all` | Revoke all active sessions | ✅ |
+El proyecto cuenta con **252 pruebas automatizadas** distribuidas en dos categorías principales, todas ejecutables localmente con Docker:
 
-### Products
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `GET` | `/api/v1/products` | All active products | ✅ |
-| `GET` | `/api/v1/products/{id}` | Product by ID | ✅ |
-| `POST` | `/api/v1/products/create` | Create product | ✅ ADMIN |
-| `PUT` | `/api/v1/products/{id}` | Update product | ✅ ADMIN |
-| `DELETE` | `/api/v1/products/{id}` | Soft delete product | ✅ ADMIN |
+### Pruebas Unitarias (`@ExtendWith(MockitoExtension.class)`)
+- **~135 tests** que cubren servicios, controladores, consumidores Kafka, filtros de seguridad y aspectos de rate limiting
+- Mock completo de todas las dependencias externas (repositorios Spring Data, productores Kafka, servicios de email)
+- Validación de excepciones, flujos alternos, idempotencia y casos borde
+- Controladores probados con `@WebMvcTest` + `@MockitoBean` + `@WithMockUser`
+- Consumidores Kafka probados de forma aislada con Mockito (`@Mock` + `@InjectMocks`)
+- No requieren Docker ni ninguna infraestructura externa
 
-### Categories
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `GET` | `/api/v2/categories` | All active categories | ✅ |
-| `GET` | `/api/v2/categories/{id}` | Category by ID | ✅ |
-| `GET` | `/api/v2/categories/root-categories` | Top-level categories | ✅ |
-| `POST` | `/api/v2/categories/create` | Create category | ✅ ADMIN |
-| `DELETE` | `/api/v2/categories/{id}` | Soft delete category | ✅ ADMIN |
+### Pruebas de Integración (`@SpringBootTest` + `@Transactional` + Testcontainers)
+- **~22 tests** que levantan el contexto completo de Spring sobre una base de datos **PostgreSQL 16 real** provisionada por **Testcontainers**
+- Cada ejecución de tests arranca un contenedor PostgreSQL dinámico y efímero (puerto aleatorio), lo que garantiza aislamiento total entre ejecuciones y elimina la necesidad de una base de datos local dedicada
+- `BaseIntegrationTest` expone `@DynamicPropertySource` que inyecta la URL, usuario y contraseña del contenedor PostgreSQL en Spring, reemplazando cualquier configuración estática
+- Perfil `test` (`@ActiveProfiles("test")` + `application-test.yml`) que:
+  - Deshabilita Redis, Kafka y Flyway mediante `spring.autoconfigure.exclude`
+  - Aísla productores Kafka (`OrderKafkaProducer`, `PasswordResetKafkaProducer`, `UserRegisteredKafkaProducer`, `PaymentRetryProducer`) con `@MockitoBean` global en `BaseIntegrationTest`
+  - Aísla servicios externos adicionales (`SecurityHelper`, `OutboxProcessor`, `ProxyManager`, `StockNotificationService`) con `@MockitoBean` por test
+- Verifican el comportamiento real de JPA, transacciones Spring, eventos de aplicación (`@RecordApplicationEvents`) y el flujo completo service → repository → base de datos
+- Pruebas para: Auth (registro, login, refresh, logout, cambio de contraseña), Carrito (CRUD completo con stock y bloqueo pesimista), Órdenes (checkout transaccional), Productos (CRUD con inventario), Inventario (movimientos y eventos de dominio)
 
-### Inventory
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `GET` | `/api/v1/inventories/{productId}` | Stock details | ✅ |
-| `GET` | `/api/v1/inventories/product/{productId}/history` | Paginated movement history | ✅ |
-| `POST` | `/api/v1/inventories/{productId}/add` | Add stock | ✅ ADMIN |
-| `POST` | `/api/v1/inventories/{productId}/deduct` | Deduct stock | ✅ ADMIN |
-| `PATCH` | `/api/v1/inventories/{productId}/status` | Update inventory status | ✅ ADMIN |
+### Pruebas de Infraestructura (Testcontainers + Kafka real)
+- `EmailKafkaConsumerIntegrationTest` levanta un **Kafka 7.4 real** en contenedor Docker via `@ServiceConnection`
+- Verifica el flujo completo productor → tópico → consumidor con idempotencia
+- Configuración aislada con `@SpringBootTest(classes = {...})` y auto-configuración limitada
+- Usa `await()` para aserciones asíncronas sin sleeps arbitrarios
 
-### Cart
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `GET` | `/api/v1/carts` | Get current user's cart | ✅ |
-| `POST` | `/api/v1/carts/item` | Add item to cart | ✅ |
-| `PUT` | `/api/v1/carts/item/{cartItemId}` | Update item quantity | ✅ |
-| `DELETE` | `/api/v1/carts/item/{cartItemId}` | Remove item from cart | ✅ |
+### Ejecución de Tests
 
-### Orders
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `POST` | `/api/v1/orders/checkout` | Place an order | ✅ |
-| `GET` | `/api/v1/orders` | Get all orders for current user | ✅ |
-| `GET` | `/api/v1/orders/{orderId}` | Get order by ID | ✅ |
+```bash
+# Todas las pruebas (requiere Docker en ejecución)
+./mvnw clean test
 
-### Payments
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|:---:|
-| `POST` | `/api/v1/payments/process` | Process payment (Stripe) | ✅ |
-| `POST` | `/api/v1/payments/webhook` | Stripe webhook receiver | ❌ (signature-verified) |
-| `POST` | `/api/v1/refunds` | Process a refund | ✅ ADMIN |
+# Prueba de integración específica
+./mvnw test -Dtest="AuthServiceImplIntegrationTest"
+
+# Pruebas unitarias únicamente (no requieren Docker)
+./mvnw test -Dtest="com.jonathan.ecommerce.service.impl.*"
+```
 
 ---
 
-## 🧪 Testing
+## 🚦 Primeros Pasos
 
-Unit tests written with JUnit 5 + Mockito covering the core service layer:
+### Prerrequisitos
 
-| Test Class | Coverage |
-|---|---|
-| `AuthServiceTest` | Refresh token rotation, expiration, invalid token |
-| `CartServiceTest` | Add item, product not found, insufficient stock, manual disabled |
-| `InventoryServiceTest` | Stock details, deduct stock, insufficient stock, manual disabled |
-| `PasswordResetServiceImplTest` | Token validation, expiration, not found |
-| `ProductServiceTest` | Product CRUD operations |
+- **Java 21** (Temurin recomendado)
+- **Docker Desktop** (o Colima / Rancher Desktop) — **requerido** tanto para el entorno de desarrollo (PostgreSQL, Redis, Kafka via `docker-compose up`) como para la suite de pruebas (Testcontainers levanta contenedores PostgreSQL y Kafka automáticamente)
+- **Maven** (o usar el wrapper `mvnw` incluido)
+
+### 1. Clonar y Configurar
 
 ```bash
-# Run unit tests
-./mvnw test "-Dtest=AuthServiceTest,CartServiceTest,InventoryServiceTest,PasswordResetServiceImplTest,ProductServiceTest"
+git clone https://github.com/tu-usuario/ecommerce-backend.git
+cd ecommerce-backend
+
+# Copiar variables de entorno (editar según sea necesario)
+cp .env.example .env
 ```
 
-> Integration tests with Testcontainers are in progress.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Docker & Docker Compose
-- A [Stripe](https://stripe.com) account (test mode keys are sufficient)
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/JonathanDiazDev/E-commerce-Back-end.git
-cd E-commerce-Back-end
-```
-
-### 2. Configure environment variables
-
-```bash
-cp env.example .env
-```
-
-Edit `.env` and fill in your values:
-
-```env
-DB_PASSWORD=your_password
-JWT_ACCESS_TOKEN=your-secret-key-at-least-32-characters
-MAIL_USERNAME=your_mailtrap_username
-MAIL_PASSWORD=your_mailtrap_password
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-### 3. Start all services
+### 2. Levantar Infraestructura
 
 ```bash
 docker-compose up -d
 ```
 
-This starts PostgreSQL, Redis, Kafka, Zookeeper, and the application itself. Flyway migrations run automatically on startup.
+Esto inicia:
+- **PostgreSQL 16** en `localhost:5444`
+- **Redis 7** en `localhost:6379`
+- **ZooKeeper + Kafka 7.4** en `localhost:9092`
 
-| URL | Description |
-|-----|-------------|
-| `http://localhost:8080` | API base URL |
-| `http://localhost:8080/swagger-ui/index.html` | Interactive API docs |
+### 3. Variables de Entorno (`.env`)
 
----
+```env
+DB_HOST=localhost
+DB_PORT=5444
+DB_NAME=ecommerce
+DB_USERNAME=postgres
+DB_PASSWORD=tu_password
 
-## 🧪 Testing
+JWT_ACCESS_TOKEN=clave-secreta-jwt-min-32-caracteres
 
-Unit tests are written with JUnit 5 + Mockito covering the core service layer:
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=tu_mailtrap_user
+MAIL_PASSWORD=tu_mailtrap_pass
 
-| Test Class | Coverage |
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+FRONTEND_URL=http://localhost:5173
+```
+
+### 4. Compilar y Ejecutar
+
+```bash
+# Compilar (sin pruebas para arranque rápido)
+./mvnw package -DskipTests
+
+# Ejecutar
+java -jar target/ecommerce-backend-0.0.1-SNAPSHOT.jar
+
+# O directamente con Maven
+./mvnw spring-boot:run
+```
+
+### 5. Acceder
+
+| Recurso | URL |
 |---|---|
-| `AuthServiceTest` | Refresh token rotation, expiration, invalid token |
-| `CartServiceTest` | Add item, product not found, insufficient stock, manual disabled |
-| `InventoryServiceTest` | Stock details, deduct stock, insufficient stock, manual disabled |
-| `PasswordResetServiceImplTest` | Token validation, expiration, not found |
-| `ProductServiceTest` | Product CRUD operations |
+| API Base | `http://localhost:8080/api/v1` |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` |
+| Documentación OpenAPI | `http://localhost:8080/v3/api-docs` |
+
+### 6. Ejecutar Pruebas
+
+> **Importante:** Las pruebas de integración requieren Docker en ejecución. Testcontainers gestiona automáticamente los contenedores PostgreSQL y Kafka, sin necesidad de `docker-compose up` previo.
 
 ```bash
-# Run unit tests
-./mvnw test "-Dtest=AuthServiceTest,CartServiceTest,InventoryServiceTest,PasswordResetServiceImplTest,ProductServiceTest"
-```
-
-> Integration tests with Testcontainers are in progress.
-
----
-
-## 🧪 Quick API Test
-
-**Register a user:**
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Jonathan",
-    "email": "jonathan@example.com",
-    "password": "SecurePass123!"
-  }'
-```
-
-> ⚠️ Password requirements: 12–20 characters, at least one letter, one number, and one special character.
-
-**Login:**
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "jonathan@example.com", "password": "SecurePass123!"}'
-```
-
-**Authenticated request:**
-
-```bash
-curl -X GET http://localhost:8080/api/v1/products \
-  -H "Authorization: Bearer <your_access_token>"
-```
-
----
-
-## ✅ Roadmap
-
-- [x] JWT authentication with access + refresh tokens
-- [x] Token whitelist and Redis blacklist
-- [x] Refresh token rotation with SHA-256 hashing
-- [x] Logout and logout-all session revocation
-- [x] Role-based access control (RBAC)
-- [x] Product catalog with category and inventory relations
-- [x] Hierarchical category management with soft delete
-- [x] Inventory tracking with paginated movement history
-- [x] Shopping cart with pessimistic locking
-- [x] Order placement and history
-- [x] Stripe payment processing + webhook integration
-- [x] Stripe refund support
-- [x] Outbox pattern for reliable order event delivery
-- [x] Kafka-driven email notifications with DLQ
-- [x] Payment retry with dead-letter queue
-- [x] Three-layer rate limiting (Bucket4j + Redis)
-- [x] Async processing with configurable thread pool
-- [x] Trace ID propagation for request correlation
-- [x] Flyway database migrations
-- [x] Docker Compose for full local infrastructure
-- [x] CI/CD pipeline with GitHub Actions
-- [ ] Integration test coverage with Testcontainers
-- [ ] AWS deployment (ECS + RDS + ElastiCache)
-
----
-
-## 🔒 Design Decisions
-
-**Why soft delete for categories?**
-Hard deleting a category with associated products would create orphaned records. Soft delete preserves data integrity and allows reactivation without data loss.
-
-**Why the Outbox pattern?**
-Writing an order and publishing a Kafka event in separate operations risks a partial failure — the order is saved but the event is lost, or vice versa. The Outbox pattern ensures both happen atomically within the same DB transaction, with the scheduler handling delivery separately.
-
-**Why pessimistic locking on cart operations?**
-Cart updates can trigger concurrent stock validation. Pessimistic locking at the DB level prevents race conditions where two requests simultaneously pass the stock check for the same inventory record.
-
-**Why hash refresh tokens?**
-Storing raw tokens is equivalent to storing plaintext passwords — a DB breach would expose all active sessions. SHA-256 hashing ensures the stored value is useless without the original token.
-
-**Why the interface + impl pattern for services?**
-It enforces a contract between layers, makes testing easier (mock the interface, not the implementation), and follows standard Spring Boot conventions.
-
----
-
-## 🛠️ Development
-
-### Workflow
-
-```bash
-# 1. Create a feature branch
-git checkout -b feature/your-feature-name
-
-# 2. Run tests
+# Todas las pruebas (252 tests — unitarias + integración)
 ./mvnw clean test
 
-# 3. Commit using conventional commits
-git commit -m "feat: add stock notification endpoint"
-git push origin feature/your-feature-name
-```
+# Solo pruebas unitarias (no requieren Docker)
+./mvnw test -Dtest="com.jonathan.ecommerce.service.impl.*"
 
-### Running in debug mode
+# Prueba de integración específica (requiere Docker)
+./mvnw test -Dtest="AuthServiceImplIntegrationTest"
 
-```bash
-./mvnw spring-boot:run \
-  -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
-```
-
-Then attach your IDE debugger to port `5005`.
-
-### Implementation Notes
-
-- **Monetary values** — `BigDecimal` throughout to avoid floating-point precision errors
-- **Timestamps** — `Instant` (UTC) for all date/time fields
-- **Lazy loading** — `FetchType.LAZY` on all JPA relations to prevent N+1 queries
-- **Transaction isolation** — `@Transactional` on all services; `SERIALIZABLE` isolation where stock consistency is critical
-
----
-
-## 🔧 Troubleshooting
-
-### Kafka issues
-
-```bash
-# List all topics
-docker exec kafka kafka-topics.sh --list --bootstrap-server localhost:9092
-
-# Check consumer group lag
-docker exec kafka kafka-consumer-groups.sh \
-  --bootstrap-server localhost:9092 \
-  --group ecommerce-group \
-  --describe
-
-# View messages in a topic
-docker exec kafka kafka-console-consumer.sh \
-  --bootstrap-server localhost:9092 \
-  --topic order.placed \
-  --from-beginning
-```
-
-### Redis issues
-
-```bash
-# Connect to Redis CLI
-docker exec -it redis redis-cli
-
-# Check blacklisted tokens
-KEYS blacklist:*
-```
-
-### View application logs
-
-```bash
-docker-compose logs -f app
+# Prueba con Kafka real en contenedor (requiere Docker)
+./mvnw test -Dtest="EmailKafkaConsumerIntegrationTest"
 ```
 
 ---
 
-## 👤 Author
+## 📁 Estructura del Proyecto
 
-**Jonathan Díaz**
-Self-taught Java Backend Developer · Spring Boot · PostgreSQL · Kafka
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-jonathan--diaz--backend-0A66C2?style=flat-square&logo=linkedin)](https://linkedin.com/in/jonathan-diaz-backend)
-[![GitHub](https://img.shields.io/badge/GitHub-JonathanDiazDev-181717?style=flat-square&logo=github)](https://github.com/JonathanDiazDev)
+```
+src/
+├── main/
+│   ├── java/com/jonathan/ecommerce/
+│   │   ├── config/              # Seguridad, JWT, Redis, Stripe, Async
+│   │   ├── controller/          # REST Controllers (10 endpoints)
+│   │   ├── dto/
+│   │   │   ├── request/         # DTOs de entrada (record)
+│   │   │   ├── response/        # DTOs de salida (record)
+│   │   │   ├── event/           # Eventos para Kafka
+│   │   │   ├── enums/           # Enums compartidos (OutboxStatus, etc.)
+│   │   │   └── mapper/          # MapStruct mappers
+│   │   ├── entity/              # JPA Entities (18 entidades)
+│   │   │   └── enums/           # Enums de dominio
+│   │   ├── exception/           # Manejo global de excepciones
+│   │   ├── kafka/
+│   │   │   ├── config/          # Topics y configuración Kafka
+│   │   │   ├── consumer/        # Consumidores de eventos
+│   │   │   ├── processor/       # OutboxProcessor
+│   │   │   ├── producer/        # Productores Kafka
+│   │   │   └── scheduler/       # OutboxScheduler, EmailRetryScheduler
+│   │   ├── ratelimiting/
+│   │   │   ├── annotation/      # @RateLimited
+│   │   │   ├── aspect/          # RateLimitingAspect (AOP)
+│   │   │   ├── config/          # Propiedades de rate limiting
+│   │   │   ├── exception/       # RateLimitExceededException
+│   │   │   └── filter/          # RateLimitingFilter
+│   │   ├── repository/          # Spring Data JPA Repositories
+│   │   ├── service/
+│   │   │   ├── helper/          # SecurityHelper (contexto de usuario)
+│   │   │   └── impl/            # Implementaciones de servicios
+│   │   ├── stock/event/         # Eventos de dominio (stock)
+│   │   └── util/                # RequestContextUtil
+│   └── resources/
+│       ├── db/migration/        # Flyway migrations (V1-V10)
+│       └── templates/           # Thymeleaf email templates
+└── test/
+    └── java/com/jonathan/ecommerce/
+        ├── config/              # Tests de JwtAuthenticationFilter
+        ├── controller/          # @WebMvcTest controllers
+        ├── exception/           # GlobalExceptionHandler tests
+        ├── kafka/               # Kafka consumer/config tests
+        ├── ratelimiting/        # RateLimitingAspect tests
+        └── service/             # Unit + Integration tests
+```
 
 ---
 
-## 📄 License
+## 📬 API Endpoints
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+| Método | Ruta | Autenticación | Límite |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/register` | Público | 3 req/5min |
+| `POST` | `/api/v1/auth/login` | Público | 5 req/min |
+| `POST` | `/api/v1/auth/refresh` | Cookie | 100 req/min |
+| `POST` | `/api/v1/auth/logout` | Autenticado | — |
+| `POST` | `/api/v1/auth/logout-all` | Autenticado | — |
+| `PATCH` | `/api/v1/auth/change-password` | Autenticado | — |
+| `GET` | `/api/v1/auth/me` | Autenticado | — |
+| `GET` | `/api/v1/auth/sessions` | Autenticado | — |
+| `GET` | `/api/v1/products/**` | Público | 500 req/min |
+| `POST` | `/api/v1/cart/item` | USER/ADMIN | 200 req/min |
+| `DELETE` | `/api/v1/cart/item/{id}` | USER/ADMIN | 200 req/min |
+| `PUT` | `/api/v1/cart/item/{id}` | USER/ADMIN | 200 req/min |
+| `GET` | `/api/v1/cart` | USER/ADMIN | 200 req/min |
+| `POST` | `/api/v1/order/checkout` | USER/ADMIN | 20 req/min |
+| `GET` | `/api/v1/orders` | Autenticado | — |
+| `GET` | `/api/v1/orders/{id}` | Autenticado | — |
+| `POST` | `/api/v1/webhooks/stripe` | Público | — |
+
+---
+
+## 🔐 Seguridad
+
+- **Cifrado**: BCrypt para contraseñas
+- **JWT**: Access Token (1h) + Refresh Token (24h) rotados en cada uso, firmados con HMAC-SHA256
+- **Cookies HttpOnly**: Tokens almacenados en cookies seguras con `HttpOnly`, `Secure` y `SameSite=Strict`
+- **CORS**: Configurado para origins de frontend (`localhost:5173`, `localhost:3000`)
+- **Bloqueo Pesimista**: `PESSIMISTIC_WRITE` en operaciones de inventario para evitar sobreventa
+- **Envío de contraseñas**: Time-based tokens para reseteo, con expiración y uso único
+- **Rate Limiting**: Protección asimétrica por endpoint con tres capas (endpoint, usuario, IP)
+
+---
+
+<div align="center">
+
+**© 2026 — Proyecto de Portafolio**  
+*Construido con buenas prácticas de desarrollo backend moderno*
+
+</div>

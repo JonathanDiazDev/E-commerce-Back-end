@@ -34,7 +34,7 @@ public class RefreshToken {
 
   private String replacedByTokenHash;
 
-  @Column(unique = true, nullable = false)
+  @Column(nullable = false)
   private UUID familyId;
 
   @CreationTimestamp

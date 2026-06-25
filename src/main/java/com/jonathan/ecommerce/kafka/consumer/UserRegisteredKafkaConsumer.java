@@ -15,6 +15,7 @@ import jakarta.mail.MessagingException;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
@@ -24,6 +25,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 @Slf4j
 @RequiredArgsConstructor
 public class UserRegisteredKafkaConsumer {
