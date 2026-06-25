@@ -30,7 +30,7 @@ erDiagram
     }
     inventory {
         bigint id PK
-        bigint product_id UK FK
+        bigint product_id FK
         integer quantity
         varchar inventory_status
         boolean manual_disabled
